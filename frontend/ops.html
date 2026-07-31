@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/assets/llmops-mark.svg?v=8" />
     <title>Evaluation Console | LLMOps Portfolio</title>
-    <link rel="stylesheet" href="/assets/styles.css?v=11" />
+    <link rel="stylesheet" href="/assets/styles.css?v=13" />
     <link rel="stylesheet" href="/assets/vendor/katex/katex.min.css?v=1" />
   </head>
   <body class="ops-page">
@@ -134,24 +134,37 @@
         </div>
       </section>
 
-      <section class="ops-grid ops-grid-secondary">
-        <article class="ops-panel">
-          <div class="panel-heading compact"><div><p class="section-kicker">Metrics endpoint</p><h2>/metrics</h2></div></div>
+      <section class="ops-panel telemetry-panel" aria-labelledby="telemetryHeading">
+        <div class="panel-heading compact telemetry-heading">
+          <div><p class="section-kicker">Process telemetry</p><h2 id="telemetryHeading">Runtime metrics</h2></div>
+          <div class="telemetry-actions"><span id="telemetryWindow">Process-local</span><button class="secondary-button" id="replayTraffic" type="button">Replay sample traffic</button></div>
+        </div>
+        <div class="telemetry-summary" id="telemetrySummary">
+          <div><span>Requests</span><strong id="telemetryRequests">--</strong><small>since startup</small></div>
+          <div><span>Latency p95</span><strong id="telemetryP95">--</strong><small>provider generation</small></div>
+          <div><span>Check pass</span><strong id="telemetryPass">--</strong><small>all live checks</small></div>
+          <div><span>Review rate</span><strong id="telemetryReview">--</strong><small>flagged requests</small></div>
+          <div><span>Retrieval confidence</span><strong id="telemetryConfidence">--</strong><small>mean proxy score</small></div>
+          <div><span>Refusals</span><strong id="telemetryRefusals">--</strong><small>policy routed</small></div>
+        </div>
+        <div class="telemetry-body">
+          <section class="latency-panel" aria-labelledby="latencyHeading">
+            <div><h3 id="latencyHeading">Latency distribution</h3><span>non-cumulative intervals / milliseconds</span></div>
+            <div class="latency-histogram" id="latencyHistogram"><p class="loading-copy">Loading histogram</p></div>
+          </section>
+          <aside class="telemetry-context">
+            <div><span>Storage</span><strong>In-process memory</strong><small>Prometheus owns persistence in a deployed environment</small></div>
+            <div><span>Reset behavior</span><strong>On API restart</strong><small>No synthetic traffic is hidden or preloaded</small></div>
+            <div><span>Cardinality</span><strong>Bounded labels</strong><small>No prompts, document text, or user identifiers</small></div>
+          </aside>
+        </div>
+        <details class="metrics-exposition">
+          <summary><span>Prometheus exposition</span><code>/metrics</code></summary>
           <pre class="metrics-box" id="metricsText">Loading metrics</pre>
-        </article>
-        <article class="ops-panel">
-          <div class="panel-heading compact"><div><p class="section-kicker">Further reading</p><h2>Case studies</h2></div></div>
-          <div class="case-list">
-            <a href="/portfolio-docs/case-studies/01-llm-evaluation-platform.md"><span>01</span><strong>LLM evaluation platform</strong></a>
-            <a href="/portfolio-docs/case-studies/02-rag-observability-stack.md"><span>02</span><strong>RAG observability stack</strong></a>
-            <a href="/portfolio-docs/case-studies/03-vllm-kubernetes-serving.md"><span>03</span><strong>vLLM / Kubernetes serving</strong></a>
-            <a href="/portfolio-docs/case-studies/04-ml-security-privacy.md"><span>04</span><strong>ML security and privacy</strong></a>
-            <a href="/portfolio-docs/case-studies/05-aiops-reliability.md"><span>05</span><strong>AIOps reliability</strong></a>
-          </div>
-        </article>
+        </details>
       </section>
     </main>
     <script src="/assets/vendor/katex/katex.min.js?v=1"></script>
-    <script src="/assets/ops.js?v=8"></script>
+    <script src="/assets/ops.js?v=9"></script>
   </body>
 </html>

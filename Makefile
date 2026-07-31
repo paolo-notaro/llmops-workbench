@@ -1,7 +1,7 @@
 HOST ?= 127.0.0.1
 PORT ?= 8000
 
-.PHONY: install test demo report api clean
+.PHONY: install test demo report case-studies api clean
 
 install:
 	poetry config virtualenvs.in-project false --local
@@ -16,6 +16,9 @@ demo:
 
 report:
 	poetry run python scripts/build_report.py
+
+case-studies:
+	poetry run python scripts/build_case_studies.py
 
 api:
 	poetry run uvicorn llmops_portfolio.app:app --host $(HOST) --port $(PORT)

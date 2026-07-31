@@ -259,3 +259,26 @@ class LiveMonitoringReport(BaseModel):
     latency_p95_ms: float = Field(ge=0.0)
     quality_metrics: list[LiveMetricDefinition]
     recent_records: list[LiveEvaluationRecord]
+
+
+class ObservabilityBucket(BaseModel):
+    """One non-cumulative latency interval for the Ops visualization."""
+
+    label: str
+    upper_bound_ms: float | None = None
+    count: int = Field(ge=0)
+
+
+class ObservabilitySummary(BaseModel):
+    """Structured process-local telemetry for the Ops console."""
+
+    process_started_at: str
+    uptime_seconds: float = Field(ge=0.0)
+    request_count: int = Field(ge=0)
+    average_latency_ms: float = Field(ge=0.0)
+    latency_p95_ms: float = Field(ge=0.0)
+    pass_rate: float = Field(ge=0.0, le=1.0)
+    review_rate: float = Field(ge=0.0, le=1.0)
+    mean_retrieval_confidence: float = Field(ge=0.0, le=1.0)
+    refusal_count: int = Field(ge=0)
+    latency_buckets: list[ObservabilityBucket]

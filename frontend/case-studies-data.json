@@ -1,0 +1,482 @@
+{
+  "studies": [
+    {
+      "number": "01",
+      "slug": "llm-evaluation-platform",
+      "title": "LLM Evaluation Platform",
+      "themes": [
+        "evaluation",
+        "CI gates",
+        "promotion"
+      ],
+      "summary": "LLM applications need repeatable quality checks before prompts, retrieval logic, or model versions are promoted. Manual review alone does not scale, and single-score evaluations hide regressions in factuality, grounding, safety, privacy, latency, and robustness.",
+      "sections": [
+        {
+          "heading": "Problem",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "LLM applications need repeatable quality checks before prompts, retrieval logic, or model versions are promoted. Manual review alone does not scale, and single-score evaluations hide regressions in factuality, grounding, safety, privacy, latency, and robustness."
+            }
+          ]
+        },
+        {
+          "heading": "Constraints",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Evaluation artifacts may contain sensitive prompts or user context.",
+                "Production traffic cannot be replayed publicly without sanitization.",
+                "Quality gates must be understandable by engineering, product, and risk stakeholders.",
+                "Evaluations must be stable enough for CI while still leaving room for human review."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Architecture pattern",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "A representative pattern is a multi-dimensional evaluation service that stores versioned datasets, executes model or prompt candidates against fixed suites, and emits pass/fail quality gates. Candidate changes move from test to beta to production only after meeting explicit thresholds for factuality, grounding, safety, privacy, latency, and robustness."
+            }
+          ]
+        },
+        {
+          "heading": "Evaluation / monitoring strategy",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "The public demo equivalent uses JSONL evaluation sets, deterministic mock responses, and transparent heuristic evaluators. In a production setting, this pattern can be extended with human labels, model-graded rubrics, adversarial suites, regression baselines, and CI checks that block promotion when critical dimensions regress."
+            }
+          ]
+        },
+        {
+          "heading": "Failure modes",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Aggregate pass rates can hide failures in rare but high-severity categories.",
+                "Model-graded evaluations can drift when judge prompts or judge models change.",
+                "Static test sets can become stale as product behavior evolves.",
+                "Latency and reliability can regress even when answer quality improves."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Trade-offs",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Heuristic checks are explainable and stable, but less nuanced than human review. Model-graded checks scale better, but require calibration, sampling, and audit trails. CI quality gates improve discipline, but thresholds need careful ownership to avoid blocking useful iteration."
+            }
+          ]
+        },
+        {
+          "heading": "What is intentionally omitted",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "This write-up omits private datasets, exact score thresholds, internal review workflows, and provider-specific prompt or model configurations."
+            }
+          ]
+        },
+        {
+          "heading": "Public demo mapping",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "The demo maps this pattern to `examples/evaluation_sets/`, `src/llmops_portfolio/evaluators.py`, and generated reports under `reports/`."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "02",
+      "slug": "rag-observability-stack",
+      "title": "RAG Observability Stack",
+      "themes": [
+        "retrieval",
+        "citations",
+        "telemetry"
+      ],
+      "summary": "RAG systems can fail even when the language model behaves well. Poor chunking, weak retrieval, missing citations, stale documents, or latency spikes can produce unsupported answers and low user trust.",
+      "sections": [
+        {
+          "heading": "Problem",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "RAG systems can fail even when the language model behaves well. Poor chunking, weak retrieval, missing citations, stale documents, or latency spikes can produce unsupported answers and low user trust."
+            }
+          ]
+        },
+        {
+          "heading": "Constraints",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Source documents may be private or regulated.",
+                "Retrieval traces can reveal sensitive user intent.",
+                "Product teams need interpretable quality signals, not only embedding scores.",
+                "Monitoring must separate retrieval failures from generation failures."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Architecture pattern",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "A sanitized abstraction of this pattern includes document ingestion, chunking, retrieval, optional reranking, answer generation, citation checks, and telemetry across each stage. Product metrics such as successful resolution rate sit alongside system metrics such as retrieval hit rate, citation coverage, latency, and errors."
+            }
+          ]
+        },
+        {
+          "heading": "Evaluation / monitoring strategy",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Evaluation checks compare expected concepts against retrieved chunks, verify citation presence, and track answer grounding. Production equivalents often add click feedback, human review, query clustering, reranker diagnostics, and traces that show which chunks influenced an answer."
+            }
+          ]
+        },
+        {
+          "heading": "Failure modes",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Chunks are too large to retrieve precisely or too small to preserve context.",
+                "Retrieved documents are topically similar but not actually sufficient.",
+                "Citations are present but point to irrelevant sources.",
+                "Reranking improves relevance but adds latency and operational complexity.",
+                "Retrieval quality drops after document updates."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Trade-offs",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Simple retrieval is cheap and explainable, but may miss semantic matches. Dense retrieval and reranking improve recall, but require more infrastructure and evaluation rigor. Strict grounding checks reduce unsupported answers, but can increase refusals for underspecified questions."
+            }
+          ]
+        },
+        {
+          "heading": "What is intentionally omitted",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "The public demo omits private document collections, production embeddings, telemetry backends, exact chunking policies, and internal product analytics."
+            }
+          ]
+        },
+        {
+          "heading": "Public demo mapping",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "The demo maps this pattern to `src/llmops_portfolio/rag.py`, `src/llmops_portfolio/evaluators.py`, and the `/metrics` endpoint in `src/llmops_portfolio/app.py`."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "03",
+      "slug": "vllm-kubernetes-serving",
+      "title": "vLLM / Kubernetes Serving",
+      "themes": [
+        "serving",
+        "Kubernetes",
+        "rollout"
+      ],
+      "summary": "Serving LLMs reliably requires balancing latency, throughput, cost, model memory, rollout safety, and operational visibility. Changes to model weights, quantization, prompts, or routing can affect user experience and infrastructure stability.",
+      "sections": [
+        {
+          "heading": "Problem",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Serving LLMs reliably requires balancing latency, throughput, cost, model memory, rollout safety, and operational visibility. Changes to model weights, quantization, prompts, or routing can affect user experience and infrastructure stability."
+            }
+          ]
+        },
+        {
+          "heading": "Constraints",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "GPU capacity is limited and expensive.",
+                "Rollouts must protect latency SLOs and error budgets.",
+                "Serving infrastructure may include private model artifacts.",
+                "Public examples should avoid exposing exact cluster topology or production traffic patterns."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Architecture pattern",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "A representative pattern uses a model serving layer such as vLLM behind a Kubernetes service, with deployment hygiene around image versioning, resource requests, autoscaling, health checks, canary rollout, and rollback. Traffic can be shifted gradually while SLOs and evaluation metrics are monitored."
+            }
+          ]
+        },
+        {
+          "heading": "Evaluation / monitoring strategy",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Serving changes are evaluated with offline suites, synthetic load, latency percentiles, error rates, token throughput, and canary comparisons. Promotion depends on both answer quality and operational health."
+            }
+          ]
+        },
+        {
+          "heading": "Failure modes",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Context length or batching changes cause latency spikes.",
+                "GPU memory pressure leads to evictions or degraded throughput.",
+                "Canary metrics look healthy at low traffic but fail at production load.",
+                "Rollback is delayed because model, prompt, and retrieval versions are not tracked together."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Trade-offs",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Self-hosting improves control and can reduce marginal cost, but increases operational burden. Managed providers reduce infrastructure work, but require careful privacy, cost, and reliability controls. Canary rollout reduces blast radius, but adds monitoring and release-management complexity."
+            }
+          ]
+        },
+        {
+          "heading": "What is intentionally omitted",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "This public write-up omits exact cluster configuration, provider contracts, model artifacts, production traffic profiles, and internal SLO thresholds."
+            }
+          ]
+        },
+        {
+          "heading": "Public demo mapping",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "The local demo uses a `MockLLMProvider` instead of a real vLLM cluster. The same provider boundary in `src/llmops_portfolio/providers.py` is where a real serving adapter would be introduced."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "04",
+      "slug": "ml-security-privacy",
+      "title": "ML Security And Privacy",
+      "themes": [
+        "guardrails",
+        "privacy",
+        "threats"
+      ],
+      "summary": "LLM systems introduce security and privacy risks including prompt injection, sensitive data leakage, unsafe instruction following, model extraction, and membership inference. These risks must be addressed without overclaiming what simple guardrails can prove.",
+      "sections": [
+        {
+          "heading": "Problem",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "LLM systems introduce security and privacy risks including prompt injection, sensitive data leakage, unsafe instruction following, model extraction, and membership inference. These risks must be addressed without overclaiming what simple guardrails can prove."
+            }
+          ]
+        },
+        {
+          "heading": "Constraints",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Security evaluations may involve sensitive prompts or policy details.",
+                "Privacy controls must be auditable and conservative.",
+                "Guardrails should fail closed for high-risk categories.",
+                "Public demos must avoid operational security details that should remain private."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Architecture pattern",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "A representative pattern layers input filtering, retrieval isolation, prompt hardening, output checks, audit logging, and human review. For higher-risk settings, concepts such as trusted execution environments, differential privacy, data minimization, and retention controls may be considered as part of a broader risk program."
+            }
+          ]
+        },
+        {
+          "heading": "Evaluation / monitoring strategy",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "The public demo equivalent uses synthetic unsafe prompts and keyword-based checks to show the shape of a safety evaluation. Production systems can extend this with adversarial prompt suites, privacy leakage tests, red-team findings, policy-based review queues, and incident response playbooks."
+            }
+          ]
+        },
+        {
+          "heading": "Failure modes",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Prompt injection instructions are retrieved from untrusted documents.",
+                "Outputs include sensitive fields because context filtering is incomplete.",
+                "Guardrails block legitimate use cases due to overly broad rules.",
+                "A model appears safe on static tests but fails under paraphrased attacks.",
+                "Security logs collect more sensitive information than necessary."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Trade-offs",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Strict guardrails reduce risk but can affect usability. Lightweight checks are fast and explainable but incomplete. Advanced privacy technologies can help in specific threat models, but they are not substitutes for data minimization, access control, and operational review."
+            }
+          ]
+        },
+        {
+          "heading": "What is intentionally omitted",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "This write-up omits real attack logs, internal policies, sensitive detection rules, private threat models, and exact mitigation thresholds."
+            }
+          ]
+        },
+        {
+          "heading": "Public demo mapping",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "The demo maps this pattern to `safety_eval.jsonl`, unsafe keyword checks in `src/llmops_portfolio/evaluators.py`, and refusal behavior in `src/llmops_portfolio/providers.py`."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "05",
+      "slug": "aiops-reliability",
+      "title": "AIOps Reliability",
+      "themes": [
+        "reliability",
+        "incidents",
+        "observability"
+      ],
+      "summary": "Reliability work for AI systems spans model behavior, data pipelines, application services, and infrastructure. Incidents require structured signals that help teams move from symptom detection to root-cause analysis and recovery.",
+      "sections": [
+        {
+          "heading": "Problem",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Reliability work for AI systems spans model behavior, data pipelines, application services, and infrastructure. Incidents require structured signals that help teams move from symptom detection to root-cause analysis and recovery."
+            }
+          ]
+        },
+        {
+          "heading": "Constraints",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Production logs and incident timelines often contain sensitive operational data.",
+                "Reliability metrics must be actionable rather than decorative.",
+                "AIOps workflows should support responders instead of replacing engineering judgment.",
+                "Public examples should describe patterns without exposing internal runbooks."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Architecture pattern",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "A representative pattern combines structured logs, metrics, traces, anomaly detection, failure prediction, root-cause candidates, and incident workflow integration. Signals are grouped by service, dependency, model version, data source, and deployment event."
+            }
+          ]
+        },
+        {
+          "heading": "Evaluation / monitoring strategy",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Monitoring focuses on latency, errors, retrieval hit rate, evaluation pass rate, request volume, and review queues. Production equivalents can add SLO burn rates, anomaly detectors, incident annotations, and post-incident learning loops."
+            }
+          ]
+        },
+        {
+          "heading": "Failure modes",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Alerts fire on symptoms but do not identify the failing dependency.",
+                "Root-cause suggestions are plausible but unsupported by evidence.",
+                "Incident automation creates noise during partial outages.",
+                "Model quality regressions are mistaken for infrastructure failures.",
+                "Reliability dashboards omit business-impact metrics."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Trade-offs",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Automated diagnosis can shorten investigation time, but only when evidence is traceable. More telemetry improves visibility, but can increase cost and privacy risk. Incident workflows benefit from structure, but responders still need clear ownership and escalation paths."
+            }
+          ]
+        },
+        {
+          "heading": "What is intentionally omitted",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "This public demo omits internal incident records, production dashboards, exact alert thresholds, and private service topology."
+            }
+          ]
+        },
+        {
+          "heading": "Public demo mapping",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "The demo maps this pattern to `src/llmops_portfolio/observability.py`, generated evaluation reports, and the FastAPI `/metrics` endpoint."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

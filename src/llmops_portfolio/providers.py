@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import time
 from typing import Protocol
 
@@ -51,7 +52,7 @@ class MockLLMProvider:
 
     def _grounded_answer(self, query: str, contexts: list[RetrievedDocument]) -> str:
         citations = " ".join(f"[doc:{doc.doc_id}]" for doc in contexts[:2])
-        combined = " ".join(doc.text.replace("\n", " ") for doc in contexts[:2])
+        combined = " ".join(_markdown_body(doc.text) for doc in contexts[:2])
         sentences = _first_relevant_sentences(combined, query, limit=2)
         if not sentences:
             sentences = ["The retrieved synthetic documents do not provide enough detail for a specific answer."]
@@ -89,6 +90,18 @@ def provider_from_env(provider_name: str | None = None) -> LLMProvider:
     if provider == "anthropic":
         return ExternalPlaceholderProvider("anthropic", "ANTHROPIC_API_KEY")
     raise ValueError(f"Unsupported LLM_PROVIDER: {provider}")
+
+
+def _markdown_body(text: str) -> str:
+    """Flatten Markdown body text while excluding structural markers."""
+
+    body_lines: list[str] = []
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line or re.match(r"^#{1,6}\s", line):
+            continue
+        body_lines.append(re.sub(r"^[-*+]\s+", "", line))
+    return " ".join(body_lines)
 
 
 def _first_relevant_sentences(text: str, query: str, limit: int) -> list[str]:
