@@ -22,6 +22,7 @@ from llmops_portfolio.models import (
     EvaluationReport,
     LiveEvaluationRecord,
     LiveMonitoringReport,
+    ObservabilitySummary,
     QueryRequest,
     QueryResponse,
     QueryTrace,
@@ -100,6 +101,20 @@ def ops_console() -> FileResponse:
     """Serve the LLMOps / DevOps console."""
 
     return FileResponse(FRONTEND_DIR / "ops.html")
+
+
+@app.get("/case-studies", include_in_schema=False)
+def case_studies() -> FileResponse:
+    """Serve the rendered case-study index."""
+
+    return FileResponse(FRONTEND_DIR / "case-studies.html")
+
+
+@app.get("/case-studies/{slug}", include_in_schema=False)
+def case_study(slug: str) -> FileResponse:
+    """Serve the rendered case-study detail shell."""
+
+    return FileResponse(FRONTEND_DIR / "case-study.html")
 
 
 @app.get("/favicon.ico", include_in_schema=False)
@@ -197,6 +212,9 @@ def query(request: QueryRequest) -> QueryResponse:
         response.latency_ms,
         evaluation_passed=all(quality_checks.values()),
         retrieval_hit=live_record.retrieved_count > 0,
+        requires_review=live_record.requires_review,
+        refusal="cannot help" in response.answer.lower(),
+        retrieval_confidence=live_record.metrics["retrieval_confidence"],
     )
     _latest_trace = QueryTrace(
         query=request.query,
@@ -216,11 +234,40 @@ def query(request: QueryRequest) -> QueryResponse:
     )
 
 
+@app.get("/observability/summary", response_model=ObservabilitySummary)
+def observability_summary() -> ObservabilitySummary:
+    """Return structured process-local telemetry for the Ops console."""
+
+    return metrics_registry.summary()
+
+
 @app.get("/metrics", response_class=PlainTextResponse)
 def metrics() -> str:
-    """Return Prometheus-style metrics text."""
+    """Return Prometheus exposition for runtime and offline quality signals."""
 
-    return metrics_registry.render_prometheus()
+    profile = get_dataset_profile()
+    report = _get_offline_report()
+    lines = [metrics_registry.render_prometheus().rstrip(), ""]
+    lines.extend([
+        "# HELP llmops_dataset_info Version and size of the annotated synthetic dataset",
+        "# TYPE llmops_dataset_info gauge",
+        f'llmops_dataset_info{{dataset_id="{profile.dataset_id}",version="{profile.version}",examples="{profile.total_examples}"}} 1',
+        "# HELP llmops_offline_metric_score Latest versioned offline metric score",
+        "# TYPE llmops_offline_metric_score gauge",
+    ])
+    for metric in report.summary.quality_metrics:
+        lines.append(
+            f'llmops_offline_metric_score{{metric="{metric.name}",version="{profile.version}"}} {metric.value:.3f}'
+        )
+    lines.extend([
+        "# HELP llmops_offline_gate_pass Latest versioned offline gate outcome",
+        "# TYPE llmops_offline_gate_pass gauge",
+    ])
+    for metric in report.summary.quality_metrics:
+        lines.append(
+            f'llmops_offline_gate_pass{{metric="{metric.name}",version="{profile.version}"}} {int(metric.passed)}'
+        )
+    return "\n".join(lines) + "\n"
 
 
 def _get_offline_report() -> EvaluationReport:

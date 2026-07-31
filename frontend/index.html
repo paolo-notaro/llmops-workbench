@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/assets/llmops-mark.svg?v=8" />
     <title>LLMOps Portfolio | Local Evaluation Workspace</title>
-    <link rel="stylesheet" href="/assets/styles.css?v=11" />
+    <link rel="stylesheet" href="/assets/styles.css?v=13" />
   </head>
   <body class="home-page">
     <header class="product-header home-header">
@@ -51,22 +51,56 @@
           <span class="route-meta"><b>30 cases</b><b>5 proxies</b></span>
           <span class="route-arrow" aria-hidden="true">&rarr;</span>
         </a>
+        <a class="home-route studies" href="/case-studies">
+          <span class="route-index">03</span>
+          <span class="route-type">Portfolio</span>
+          <span class="route-copy"><strong>Case studies</strong><small>Read five sanitized engineering patterns and their mapping to the public implementation</small></span>
+          <span class="route-meta"><b>5 studies</b><b>Rendered HTML</b></span>
+          <span class="route-arrow" aria-hidden="true">&rarr;</span>
+        </a>
       </section>
 
       <section class="home-system" aria-labelledby="pathHeading">
-        <div class="home-section-heading"><div><p class="section-kicker">System</p><h2 id="pathHeading">Shared request path</h2></div><span>Synthetic inputs / local execution / inspectable outputs</span></div>
-        <div class="home-path" aria-label="Shared local system path">
-          <div><span>01</span><strong>Markdown corpus</strong><small>4 synthetic files</small></div>
-          <div><span>02</span><strong>TF-IDF retrieval</strong><small>top-k cosine search</small></div>
-          <div><span>03</span><strong>Mock provider</strong><small>deterministic answers</small></div>
-          <div><span>04</span><strong>Live checks</strong><small>reference-free signals</small></div>
-          <div><span>05</span><strong>Offline gates</strong><small>annotated ground truth</small></div>
+        <div class="home-section-heading"><div><p class="section-kicker">Architecture</p><h2 id="pathHeading">Runtime and evaluation flow</h2></div><span>Two execution modes / one local RAG stack</span></div>
+        <div class="flow-map" aria-label="Online request and offline benchmark architecture">
+          <section class="flow-lane flow-online" aria-labelledby="onlineFlowHeading">
+            <header class="flow-lane-label"><span>Online</span><strong id="onlineFlowHeading">Interactive request</strong><small>Runs for each customer query</small></header>
+            <div class="flow-lane-body">
+              <div class="flow-steps">
+                <div class="flow-node"><span>01</span><strong>Query API</strong><small>question + top-k</small></div>
+                <div class="flow-node shared"><span>02</span><strong>Policy routing</strong><small>answer or refuse</small></div>
+                <div class="flow-node shared"><span>03</span><strong>TF-IDF retrieval</strong><small>ranked context</small></div>
+                <div class="flow-node shared"><span>04</span><strong>Mock provider</strong><small>deterministic generation</small></div>
+                <div class="flow-node"><span>05</span><strong>Answer + citations</strong><small>customer response</small></div>
+              </div>
+              <div class="flow-branch">
+                <span>Observed after generation</span>
+                <div><strong>Live proxies</strong><small>support / citations / policy / contract</small></div>
+                <div><strong>Rolling window</strong><small>metrics + review signals</small></div>
+              </div>
+            </div>
+          </section>
+
+          <div class="flow-shared-key"><span>Shared runtime</span><strong>Policy routing / retrieval / provider</strong><small>The benchmark exercises the same components as interactive traffic</small></div>
+
+          <section class="flow-lane flow-offline" aria-labelledby="offlineFlowHeading">
+            <header class="flow-lane-label"><span>Offline</span><strong id="offlineFlowHeading">Versioned benchmark</strong><small>Runs only when explicitly requested</small></header>
+            <div class="flow-lane-body">
+              <div class="flow-steps">
+                <div class="flow-node"><span>01</span><strong>Annotated cases</strong><small>sources + actions + terms</small></div>
+                <div class="flow-node shared"><span>02</span><strong>Same RAG pipeline</strong><small>policy / retrieval / provider</small></div>
+                <div class="flow-node"><span>03</span><strong>Stored predictions</strong><small>answers + retrieved docs</small></div>
+                <div class="flow-node"><span>04</span><strong>Six evaluators</strong><small>labeled metric populations</small></div>
+                <div class="flow-node"><span>05</span><strong>Gates + report</strong><small>versioned release evidence</small></div>
+              </div>
+            </div>
+          </section>
         </div>
       </section>
 
       <footer class="home-footer">
         <span>Synthetic data / no paid API / no network calls by default</span>
-        <nav aria-label="Project links"><a href="/metrics">Metrics</a><a href="/portfolio-docs/index.md">Documentation</a><a href="https://github.com/paolo-notaro/llmops-portfolio">GitHub</a></nav>
+        <nav aria-label="Project links"><a href="/metrics">Metrics</a><a href="/case-studies">Case studies</a><a href="https://github.com/paolo-notaro/llmops-portfolio">GitHub</a></nav>
       </footer>
     </main>
     <script src="/assets/home.js?v=1"></script>
