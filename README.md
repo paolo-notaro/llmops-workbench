@@ -51,7 +51,7 @@ An LLM application combines a model with prompts, retrieved context, evaluation 
 
 Thirty synthetic cases define expected sources, support terms, actions, output contracts, prompt families, perturbations, and risk tags. Retrieval F1, citation support, answer grounding, balanced policy accuracy, format compliance, and paired robustness each expose their denominator and pass threshold.
 
-The stored snapshot is returned by `GET /evaluation/offline` and changes only when `POST /evaluation/offline/run` is called explicitly. Dataset metadata is available from `GET /evaluation/dataset`.
+The benchmark snapshot is returned by `GET /evaluation/offline`. Dataset metadata is available from `GET /evaluation/dataset`.
 
 ### Live diagnostics
 
@@ -121,6 +121,10 @@ The static frontend is served by FastAPI and requires no separate Node.js build.
 <summary><strong>Google Cloud Run deployment</strong></summary>
 
 The hosted instance is deployed on Google Cloud Run. When repository delivery is enabled, pushes to `main` deploy automatically after the CI checks pass.
+
+The public service limits request bodies and request rates, omits submitted prompts from telemetry, disables mutation and API-discovery endpoints, and runs as a non-root container with a dedicated runtime identity.
+
+Deployment requires a pre-provisioned runtime service account and a deployer allowed to use it. CI reads that identity from repository configuration; the manual helper accepts it explicitly as `./scripts/deploy_cloud_run.sh PROJECT_ID RUNTIME_SERVICE_ACCOUNT [REGION]`.
 
 </details>
 

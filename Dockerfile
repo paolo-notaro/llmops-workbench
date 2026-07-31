@@ -25,6 +25,9 @@ COPY datasets ./datasets
 COPY docs ./docs
 COPY frontend ./frontend
 
+RUN useradd --create-home --uid 10001 appuser
+
+USER appuser
 EXPOSE 8000
 
 CMD ["uvicorn", "llmops_workbench.app:app", "--host", "0.0.0.0", "--port", "8000"]

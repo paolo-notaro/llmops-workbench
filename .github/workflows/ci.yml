@@ -51,6 +51,10 @@ jobs:
           service_account: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
       - name: Configure Google Cloud CLI
         uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+      - name: Validate runtime identity
+        run: |
+          gcloud iam service-accounts describe "${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}" \
+            --project "${{ vars.GCP_PROJECT_ID }}"
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy llmops-workbench \
@@ -67,6 +71,7 @@ jobs:
             --max-instances 1 \
             --timeout 60 \
             --cpu-throttling \
+            --service-account "${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}" \
             --set-env-vars LLM_PROVIDER=mock,LOG_LEVEL=INFO \
             --labels app=llmops-workbench,environment=demo \
             --description "Public LLMOps evaluation and RAG observability workbench"

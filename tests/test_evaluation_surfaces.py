@@ -43,7 +43,8 @@ def test_evaluation_surface_routes_are_exposed() -> None:
     routes = {route.path: route.methods for route in app.routes if hasattr(route, "methods")}
 
     assert "GET" in routes["/evaluation/offline"]
-    assert "POST" in routes["/evaluation/offline/run"]
+    assert "/evaluation/offline/run" not in routes
+    assert "/trace/latest" not in routes
     assert "GET" in routes["/evaluation/live"]
     assert "GET" in routes["/evaluation/dataset"]
     assert evaluation_dataset().total_examples == 30

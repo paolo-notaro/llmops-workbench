@@ -25,23 +25,28 @@ from llmops_workbench.models import (
     ObservabilitySummary,
     QueryRequest,
     QueryResponse,
-    QueryTrace,
 )
 from llmops_workbench.observability import metrics_registry
 from llmops_workbench.providers import LLMProvider, provider_from_env
 from llmops_workbench.rag import LocalTfidfRAGIndex
-from llmops_workbench.report import write_report
+from llmops_workbench.security import PublicDemoSecurityMiddleware
 
 
 FRONTEND_DIR = REPO_ROOT / "frontend"
 DOCS_DIR = REPO_ROOT / "docs"
 LIVE_WINDOW_LIMIT = 50
 
-app = FastAPI(title="LLMOps Workbench API", version="0.2.0")
+app = FastAPI(
+    title="LLMOps Workbench API",
+    version="0.2.0",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+)
+app.add_middleware(PublicDemoSecurityMiddleware)
 app.mount("/assets", StaticFiles(directory=FRONTEND_DIR), name="assets")
 app.mount("/workbench-docs", StaticFiles(directory=DOCS_DIR), name="workbench-docs")
 
-_latest_trace = QueryTrace()
 _live_records: deque[LiveEvaluationRecord] = deque(maxlen=LIVE_WINDOW_LIMIT)
 _live_total_requests = 0
 _offline_report: EvaluationReport | None = None
@@ -152,15 +157,6 @@ def offline_benchmark() -> EvaluationReport:
     return _get_offline_report()
 
 
-@app.post("/evaluation/offline/run", response_model=EvaluationReport)
-def run_offline_benchmark() -> EvaluationReport:
-    """Explicitly rerun and persist the offline benchmark."""
-
-    global _offline_report
-    _offline_report = _build_offline_report()
-    return _offline_report
-
-
 @app.get("/evaluation/report", response_model=EvaluationReport)
 def evaluation_report() -> EvaluationReport:
     """Compatibility alias for the stable offline benchmark."""
@@ -179,18 +175,11 @@ def live_monitoring() -> LiveMonitoringReport:
     )
 
 
-@app.get("/trace/latest", response_model=QueryTrace)
-def latest_trace() -> QueryTrace:
-    """Return the latest query trace for the Ops console."""
-
-    return _latest_trace
-
-
 @app.post("/query", response_model=QueryResponse)
 def query(request: QueryRequest) -> QueryResponse:
     """Retrieve context, generate an answer, and record live quality proxies."""
 
-    global _latest_trace, _live_total_requests
+    global _live_total_requests
     retrieved_docs = get_index().query(request.query, top_k=request.top_k)
     response = get_provider().generate(request.query, retrieved_docs)
     _live_total_requests += 1
@@ -215,14 +204,6 @@ def query(request: QueryRequest) -> QueryResponse:
         requires_review=live_record.requires_review,
         refusal="cannot help" in response.answer.lower(),
         retrieval_confidence=live_record.metrics["retrieval_confidence"],
-    )
-    _latest_trace = QueryTrace(
-        query=request.query,
-        answer=response.answer,
-        provider=response.provider,
-        latency_ms=response.latency_ms,
-        retrieved_docs=retrieved_docs,
-        quality_checks=quality_checks,
     )
     return QueryResponse(
         answer=response.answer,
@@ -310,5 +291,4 @@ def _build_offline_report() -> EvaluationReport:
             "mode": "offline_snapshot",
         },
     )
-    write_report(report, settings.reports_dir)
     return report

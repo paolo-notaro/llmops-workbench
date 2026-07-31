@@ -7,6 +7,7 @@ const refreshLive = document.querySelector("#refreshLive");
 const metricsText = document.querySelector("#metricsText");
 const replayTraffic = document.querySelector("#replayTraffic");
 const latencyHistogram = document.querySelector("#latencyHistogram");
+const TELEMETRY_REFRESH_MS = 15000;
 
 let offlineMetrics = [];
 let selectedMetricName = null;
@@ -145,12 +146,11 @@ function renderOffline(report) {
   renderReviewQueue(report.records || []);
 }
 
-async function loadOffline(method = "GET") {
+async function loadOffline() {
   runBenchmark.disabled = true;
-  runBenchmark.textContent = method === "POST" ? "Running" : "Loading";
+  runBenchmark.textContent = "Loading";
   try {
-    const endpoint = method === "POST" ? "/evaluation/offline/run" : "/evaluation/offline";
-    const response = await fetch(endpoint, { method });
+    const response = await fetch("/evaluation/offline");
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     renderOffline(await response.json());
   } catch (error) {
@@ -160,7 +160,7 @@ async function loadOffline(method = "GET") {
     reviewList.innerHTML = '<p class="empty-copy">Review queue unavailable</p>';
   } finally {
     runBenchmark.disabled = false;
-    runBenchmark.textContent = "Run benchmark";
+    runBenchmark.textContent = "Refresh snapshot";
   }
 }
 
@@ -181,7 +181,6 @@ function renderLiveRecords(records) {
     const failed = Object.entries(record.checks).filter(([, passed]) => !passed).map(([name]) => readableName(name));
     return `<article class="live-record-row ${record.requires_review ? "review" : "pass"}">
       <header><strong>${escapeHtml(record.request_id)}</strong><span>${formatTimestamp(record.timestamp)}</span></header>
-      <p>${escapeHtml(withoutTerminalPeriod(record.query))}</p>
       <footer><span>${record.latency_ms.toFixed(2)} ms / ${record.retrieved_count} hits</span><span>${failed.length ? escapeHtml(failed.join(", ")) : "All checks passed"}</span></footer>
     </article>`;
   }).join("") : '<p class="empty-copy">No customer requests in the current process</p>';
@@ -356,7 +355,7 @@ async function replaySampleTraffic() {
 
 
 runBenchmark.addEventListener("click", async () => {
-  await loadOffline("POST");
+  await loadOffline();
   await loadDataset();
 });
 refreshLive.addEventListener("click", loadLive);
@@ -368,6 +367,7 @@ async function initialize() {
 }
 
 initialize();
-setInterval(loadLive, 5000);
-setInterval(loadObservability, 5000);
-setInterval(loadMetrics, 5000);
+setInterval(
+  () => Promise.all([loadLive(), loadObservability(), loadMetrics()]),
+  TELEMETRY_REFRESH_MS,
+);
