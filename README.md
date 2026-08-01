@@ -65,7 +65,7 @@ The evaluators provide transparent baseline signals. A production evaluation pro
 
 The workbench is evolving around one unifying object: a request trace. Interactive traffic and offline replay should pass through the same request pipeline and produce the same trace shape; evaluation, guardrails, observability, and governance then read that trace for their own purposes. Configuration comparison is likewise intended to have one engine with two surfaces: a headless baseline comparison in CI and an interactive prompt comparison in the Ops console.
 
-The public deployment intentionally uses deterministic mock generation. A real-provider adapter may be enabled explicitly for local experiments, but it is not enabled on the public service: accepting arbitrary public prompts while calling a paid model would create an unbounded-cost and prompt-injection surface. The mock-only public runtime is therefore a design boundary, not a missing production integration.
+The public deployment intentionally uses deterministic mock generation. The current external-provider options are placeholders that make no external API calls. A future real-provider adapter will be an explicit local-only integration: accepting arbitrary public prompts while calling a paid model would create an unbounded-cost and prompt-injection surface. The mock-only public runtime is therefore a design boundary, not a missing production integration.
 
 ## Explicit Non-goals
 

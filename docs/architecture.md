@@ -32,7 +32,7 @@ The target architecture treats every request as one canonical trace. Live HTTP t
 
 A single comparison engine will run configuration X and configuration Y over the same versioned dataset and report per-dimension changes with uncertainty. CI will use it headlessly against a committed baseline, while the static Ops console will expose the same result schema for prompt A/B inspection.
 
-The hosted Cloud Run service remains deterministic and mock-only. Real-provider access is a local, explicit opt-in because a public paid-model endpoint would create uncontrolled cost and prompt-injection exposure.
+The hosted Cloud Run service remains deterministic and mock-only. Current external-provider selections are non-networking placeholders. Any future real-provider access will be a local, explicit opt-in because a public paid-model endpoint would create uncontrolled cost and prompt-injection exposure.
 
 ## Scope Boundaries
 
