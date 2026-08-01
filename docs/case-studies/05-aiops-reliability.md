@@ -37,4 +37,4 @@ This public demo omits internal incident records, production dashboards, exact a
 
 ## Public demo mapping
 
-The demo maps this pattern to `src/llmops_portfolio/observability.py`, generated evaluation reports, and the FastAPI `/metrics` endpoint.
+The demo maps this pattern to `llmops_workbench/observability.py`, generated evaluation reports, and the FastAPI `/metrics` endpoint.

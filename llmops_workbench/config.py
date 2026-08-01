@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class Settings(BaseModel):

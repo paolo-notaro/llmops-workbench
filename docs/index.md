@@ -1,6 +1,6 @@
-# LLMOps Portfolio Documentation
+# LLMOps Workbench Documentation
 
-This documentation describes a privacy-safe, local-first portfolio repository for production-style LLMOps and ML systems engineering patterns.
+This documentation describes a privacy-safe, local-first workbench for production-style LLMOps and ML systems engineering patterns.
 
 The implementation uses synthetic documents, synthetic evaluation sets, deterministic mock model responses, and local metrics. It is designed to be inspected publicly without exposing employer code, private data, customer traces, proprietary prompts, or confidential architecture.
 

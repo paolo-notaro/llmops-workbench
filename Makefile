@@ -21,7 +21,7 @@ case-studies:
 	poetry run python scripts/build_case_studies.py
 
 api:
-	poetry run uvicorn llmops_portfolio.app:app --host $(HOST) --port $(PORT)
+	poetry run uvicorn llmops_workbench.app:app --host $(HOST) --port $(PORT)
 
 clean:
-	rm -rf reports .pytest_cache src/*.egg-info src/llmops_portfolio/__pycache__ tests/__pycache__ scripts/__pycache__
+	rm -rf reports .pytest_cache *.egg-info llmops_workbench/__pycache__ tests/__pycache__ scripts/__pycache__

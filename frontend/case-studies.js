@@ -75,7 +75,7 @@ function studyLink(study, direction) {
 }
 
 function renderDetail(study, studies) {
-  document.title = study.title + " | LLMOps Portfolio";
+  document.title = study.title + " | LLMOps Workbench";
   const currentIndex = studies.findIndex((item) => item.slug === study.slug);
   const container = document.querySelector("#caseStudyDetail");
   container.replaceChildren();

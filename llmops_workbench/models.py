@@ -1,4 +1,4 @@
-"""Shared Pydantic models for the LLMOps portfolio demo."""
+"""Shared Pydantic models for LLMOps Workbench."""
 
 from __future__ import annotations
 
@@ -78,7 +78,7 @@ class DimensionResult(BaseModel):
 
 
 class MetricDefinition(BaseModel):
-    """Definition and aggregate value for a portfolio-quality metric."""
+    """Definition and aggregate value for a workbench quality metric."""
 
     name: str
     label: str

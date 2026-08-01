@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from llmops_portfolio.app import app
-from llmops_portfolio.case_studies import parse_case_study
-from llmops_portfolio.observability import MetricsRegistry
+from llmops_workbench.app import app
+from llmops_workbench.case_studies import parse_case_study
+from llmops_workbench.observability import MetricsRegistry
 
 
 def test_observability_summary_uses_calibrated_latency_intervals() -> None:
@@ -74,4 +74,5 @@ def test_case_study_and_observability_routes_are_exposed() -> None:
 
     assert "GET" in routes["/case-studies"]
     assert "GET" in routes["/case-studies/{slug}"]
+    assert "GET" in routes["/health"]
     assert "GET" in routes["/observability/summary"]

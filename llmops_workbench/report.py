@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from llmops_portfolio.models import EvaluationReport
+from llmops_workbench.models import EvaluationReport
 
 
 def write_report(report: EvaluationReport, reports_dir: Path) -> tuple[Path, Path]:

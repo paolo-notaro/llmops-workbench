@@ -11,11 +11,11 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from llmops_portfolio.config import REPO_ROOT, Settings, load_settings
-from llmops_portfolio.dataset import build_dataset_profile, load_evaluation_examples
-from llmops_portfolio.evaluators import evaluate_examples
-from llmops_portfolio.live_evaluation import evaluate_live_request, summarize_live_requests
-from llmops_portfolio.models import (
+from llmops_workbench.config import REPO_ROOT, Settings, load_settings
+from llmops_workbench.dataset import build_dataset_profile, load_evaluation_examples
+from llmops_workbench.evaluators import evaluate_examples
+from llmops_workbench.live_evaluation import evaluate_live_request, summarize_live_requests
+from llmops_workbench.models import (
     DatasetProfile,
     DocumentSummary,
     EvaluationExample,
@@ -27,19 +27,19 @@ from llmops_portfolio.models import (
     QueryResponse,
     QueryTrace,
 )
-from llmops_portfolio.observability import metrics_registry
-from llmops_portfolio.providers import LLMProvider, provider_from_env
-from llmops_portfolio.rag import LocalTfidfRAGIndex
-from llmops_portfolio.report import write_report
+from llmops_workbench.observability import metrics_registry
+from llmops_workbench.providers import LLMProvider, provider_from_env
+from llmops_workbench.rag import LocalTfidfRAGIndex
+from llmops_workbench.report import write_report
 
 
 FRONTEND_DIR = REPO_ROOT / "frontend"
 DOCS_DIR = REPO_ROOT / "docs"
 LIVE_WINDOW_LIMIT = 50
 
-app = FastAPI(title="LLMOps Portfolio API", version="0.2.0")
+app = FastAPI(title="LLMOps Workbench API", version="0.2.0")
 app.mount("/assets", StaticFiles(directory=FRONTEND_DIR), name="assets")
-app.mount("/portfolio-docs", StaticFiles(directory=DOCS_DIR), name="portfolio-docs")
+app.mount("/workbench-docs", StaticFiles(directory=DOCS_DIR), name="workbench-docs")
 
 _latest_trace = QueryTrace()
 _live_records: deque[LiveEvaluationRecord] = deque(maxlen=LIVE_WINDOW_LIMIT)
@@ -84,7 +84,7 @@ def get_dataset_profile() -> DatasetProfile:
 
 @app.get("/", include_in_schema=False)
 def home() -> FileResponse:
-    """Serve the portfolio demo selector."""
+    """Serve the workbench surface selector."""
 
     return FileResponse(FRONTEND_DIR / "index.html")
 
@@ -126,9 +126,9 @@ def favicon() -> Response:
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    """Health check."""
+    """Return a dependency-free health signal for deployment probes."""
 
-    return {"status": "ok", "provider": get_provider().name}
+    return {"status": "ok"}
 
 
 @app.get("/documents", response_model=list[DocumentSummary])

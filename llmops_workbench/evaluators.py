@@ -7,7 +7,7 @@ from collections import defaultdict
 from datetime import UTC, datetime
 from statistics import median
 
-from llmops_portfolio.models import (
+from llmops_workbench.models import (
     DimensionResult,
     EvaluationExample,
     EvaluationInsight,
@@ -18,8 +18,8 @@ from llmops_portfolio.models import (
     RetrievedDocument,
     SummaryMetrics,
 )
-from llmops_portfolio.providers import LLMProvider, UNSAFE_KEYWORDS
-from llmops_portfolio.rag import LocalTfidfRAGIndex
+from llmops_workbench.providers import LLMProvider, UNSAFE_KEYWORDS
+from llmops_workbench.rag import LocalTfidfRAGIndex
 
 
 CITATION_RE = re.compile(r"\[doc:(?P<doc_id>[a-z0-9_-]+)\]")

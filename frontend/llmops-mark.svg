@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
-  <title id="title">LLMOps Portfolio mark</title>
+  <title id="title">LLMOps Workbench mark</title>
   <desc id="desc">Minimal transparent LLMOps mark with an LLM response card and deployment check.</desc>
   <defs>
     <linearGradient id="frame" x1="20" x2="108" y1="64" y2="64" gradientUnits="userSpaceOnUse">

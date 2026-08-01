@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from llmops_portfolio.case_studies import build_case_studies
+from llmops_workbench.case_studies import build_case_studies
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIR = REPO_ROOT / "docs" / "case-studies"

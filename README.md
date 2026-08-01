@@ -1,37 +1,100 @@
-# LLMOps Portfolio
+# LLMOps Workbench
 
-A privacy-safe public portfolio of production-style LLMOps patterns: evaluation, RAG, observability, safety checks, and deployment hygiene using synthetic data and local-first tooling.
+![LLMOps Workbench showing the assistant, cited retrieval, offline gates, and live monitoring](docs/assets/llmops-demo.gif)
 
-This repository is not employer code and is not a clone of private systems. It uses synthetic documents, mock model responses, and representative patterns to make production GenAI engineering work inspectable without exposing confidential data, proprietary architectures, or customer context.
+*An inspectable environment for evaluating, serving, and monitoring production-style LLM systems.*
 
-Portfolio: [paolo-notaro.github.io](https://paolo-notaro.github.io)
-GitHub: [github.com/paolo-notaro](https://github.com/paolo-notaro)
-LinkedIn: [linkedin.com/in/paolo-notaro](https://www.linkedin.com/in/paolo-notaro)
+**[Open the live workbench](https://llmops-workbench-3auiyr3neq-ew.a.run.app)**
 
-## Why This Exists
+The workbench combines a synthetic RAG application with offline evaluation, live quality signals, safety checks, observability, and controlled delivery. It uses synthetic data and deterministic model responses, so the complete lifecycle can be inspected without confidential data or paid APIs.
 
-Production LLMOps work is often confidential: evaluation datasets, prompt systems, operational traces, incident workflows, and deployment architecture cannot usually be shared publicly. This repo provides public, inspectable evidence of the same engineering patterns through a sanitized, local-first implementation.
+## What is LLMOps and why it matters
 
-The goal is to show how I think about LLM evaluation, RAG quality, observability, safety, privacy, and operational constraints while keeping the implementation small enough for a reviewer to understand quickly.
+An LLM application combines a model with prompts, retrieved context, evaluation data, policies, provider configuration, and runtime infrastructure. Each component can change independently and affect quality beyond the reach of conventional uptime and error-rate checks.
 
-## What It Demonstrates
+**LLMOps is the engineering discipline for managing that lifecycle.** It applies repeatable evaluation, release controls, monitoring, safety checks, and operational feedback to LLM systems so teams can answer practical questions:
 
-- Local RAG over synthetic Markdown documents using TF-IDF retrieval.
-- Deterministic mock LLM provider with optional environment-driven provider placeholders.
-- Versioned offline quality gates over a 30-case annotated synthetic dataset.
-- Rolling live request checks using clearly labeled reference-free proxies rather than accuracy claims.
-- Machine-readable and human-readable evaluation reports.
-- FastAPI service with a deployable frontend, stable offline snapshots, live monitoring, dataset metadata, and Prometheus-style metrics.
-- Clean separation between retrieval, providers, evaluators, reporting, observability, and API layers.
-- Privacy-safe documentation and sanitized case studies for production-style LLMOps patterns.
+- Did the candidate version improve or regress on known cases?
+- Is a response supported by the retrieved evidence?
+- Are policy and output-contract failures visible?
+- Can a release be reproduced, observed, and rolled back?
+- Can uncertain production behavior become a future regression test?
 
-## Demo Preview
+*These practices make probabilistic behavior measurable, reviewable, and safer to change.*
 
-![LLMOps portfolio demo showing the assistant, cited retrieval, offline gates, and live monitoring](docs/assets/llmops-demo.gif)
+## LLMOps Pillars in This Workbench
 
-The preview mirrors the local FastAPI demo surfaces: `/app` for the synthetic RAG assistant and `/ops` for the evaluation console.
+| Pillar | What it means | Implementation in this repository |
+| --- | --- | --- |
+| **Evaluation** | Measure quality before release against explicit expectations. | A versioned 30-case benchmark, six transparent evaluators, thresholds, and generated reports. |
+| **Retrieval quality** | Measure the context selection that shapes generated answers. | Local TF-IDF retrieval, expected-source labels, retrieval F1, confidence signals, and visible citations. |
+| **Runtime observability** | Inspect behavior after release while labeling proxy signals precisely. | Request traces, latency histograms, Prometheus-style metrics, rolling live checks, and review signals. |
+| **Safety and governance** | Encode policy behavior, refusals, data boundaries, and review paths. | Unsafe-request routing, policy checks, synthetic data, explicit privacy constraints, and case-study documentation. |
+| **Reproducibility** | Make evaluation and delivery stable enough to compare changes. | Deterministic mock generation, versioned datasets, isolated modules, tests, containers, and CI gates. |
+| **Controlled delivery** | Connect quality checks to deployment while limiting operational risk. | Automated Google Cloud Run deployment from `main` after the CI checks pass. |
 
-## Quickstart
+*This compact implementation covers a deliberate subset of production concerns.* Larger systems commonly add semantic judges, human review operations, experiment tracking, prompt and model registries, distributed tracing, persisted run history, and provider-specific telemetry.
+
+## Explore the Workbench
+
+- [`/app`](https://llmops-workbench-3auiyr3neq-ew.a.run.app/app) — query a synthetic operational corpus and inspect cited retrieval evidence.
+- [`/ops`](https://llmops-workbench-3auiyr3neq-ew.a.run.app/ops) — compare offline quality gates with live request diagnostics.
+- [`/case-studies`](https://llmops-workbench-3auiyr3neq-ew.a.run.app/case-studies) — connect broader engineering patterns to the implementation.
+
+**The mock provider is intentional.** It keeps evaluation reproducible, removes API costs, and prevents the public endpoint from generating model charges. Provider boundaries support future integrations.
+
+## Evaluation Model
+
+**The workbench keeps labeled offline evaluation separate from unlabeled runtime diagnostics.**
+
+### Offline benchmark
+
+Thirty synthetic cases define expected sources, support terms, actions, output contracts, prompt families, perturbations, and risk tags. Retrieval F1, citation support, answer grounding, balanced policy accuracy, format compliance, and paired robustness each expose their denominator and pass threshold.
+
+The stored snapshot is returned by `GET /evaluation/offline` and changes only when `POST /evaluation/offline/run` is called explicitly. Dataset metadata is available from `GET /evaluation/dataset`.
+
+### Live diagnostics
+
+Interactive requests are checked without reference answers. The system measures evidence overlap, citation validity, retrieval confidence, policy consistency, and response-contract compliance. These diagnostic proxies support operational review. **Factual accuracy and retrieval recall require labeled reference data.**
+
+Rolling results are available from `GET /evaluation/live`. Weak signals identify requests for review and possible promotion into future annotated regression cases.
+
+The evaluators provide transparent baseline signals. A production evaluation program also needs human review, semantic judges, red teaming, and provider telemetry.
+
+## System Design
+
+```mermaid
+flowchart LR
+    A["Synthetic documents"] --> B["Retrieval"]
+    C["Annotated cases"] --> D["Offline evaluation"]
+    B --> E["Retrieved context"]
+    E --> F["Mock provider"]
+    F --> G["Quality and policy checks"]
+    G --> H["Reports and release gates"]
+    G --> I["Metrics and review signals"]
+    B --> J["Interactive query API"]
+    F --> J
+```
+
+Retrieval, providers, evaluators, reporting, observability, and API delivery are separate modules so each boundary can be inspected or replaced independently.
+
+## Project Layout
+
+```text
+llmops_workbench/             Python package and FastAPI backend
+frontend/                     Static customer app and engineering console
+datasets/ground_truth/        Versioned annotated benchmark
+examples/synthetic_docs/      Synthetic RAG corpus
+examples/evaluation_sets/     Compact evaluator fixtures
+docs/                         Architecture notes and case studies
+scripts/                      Evaluation, reporting, deployment, and build utilities
+tests/                        Deterministic application tests
+```
+
+<details>
+<summary><strong>Run locally</strong></summary>
+
+Requirements: Python 3.11 or later, Poetry, and Make.
 
 ```bash
 poetry config virtualenvs.in-project false --local
@@ -42,9 +105,7 @@ make test
 make api
 ```
 
-The demo will be available at `http://127.0.0.1:8000`. Open `/app` for the customer-facing RAG assistant and `/ops` for the LLMOps console.
-
-Example API query:
+Open `http://127.0.0.1:8000`, or query the API:
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/query \
@@ -52,75 +113,31 @@ curl -s -X POST http://127.0.0.1:8000/query \
   -d '{"query": "How should a deployment rollback be handled?", "top_k": 3}'
 ```
 
+The static frontend is served by FastAPI and requires no separate Node.js build.
 
-## Deployable Demo UI
+</details>
 
-The FastAPI service serves two frontend surfaces:
+<details>
+<summary><strong>Google Cloud Run deployment</strong></summary>
 
-- `/app`: customer-facing synthetic RAG assistant with cited answers, sample prompts, source cards, and refusal behavior.
-- `/ops`: evaluation console separating versioned offline gates from rolling live request diagnostics, with annotated-dataset methodology, review queues, topology, and Prometheus-style metrics.
+The hosted instance is deployed on Google Cloud Run. When repository delivery is enabled, pushes to `main` deploy automatically after the CI checks pass.
 
-The offline snapshot is returned by `GET /evaluation/offline` and changes only after an explicit `POST /evaluation/offline/run`. Live customer requests are summarized by `GET /evaluation/live`. Annotation coverage and metric denominators are inspectable through `GET /evaluation/dataset`.
+</details>
 
-The root page `/` links to both surfaces. The implementation is static HTML/CSS/JS served by FastAPI, so it deploys with the same container as the API and does not require an npm build.
+## Data and Privacy
 
-## Repository Map
+**All application content is synthetic or sanitized.** The repository contains no customer or employer data, private prompts or traces, exact internal system designs, real provider calls in the default configuration, or committed secrets.
 
-```text
-docs/                         Sanitized architecture notes and case studies
-examples/synthetic_docs/      Synthetic corpus used by the local RAG demo
-datasets/ground_truth/         Versioned annotated offline benchmark
-examples/evaluation_sets/     Legacy compact evaluator fixtures
-frontend/                     Static customer app and Ops console
-src/llmops_portfolio/         Python package and FastAPI backend
-tests/                        Deterministic unit tests
-scripts/run_demo.py           Full local evaluation workflow
-scripts/build_report.py       Report generation entry point
-reports/                      Generated locally and ignored by git
-```
+See [docs/confidentiality.md](docs/confidentiality.md) for the complete privacy posture.
 
-## Architecture
+## Source License
 
-```mermaid
-flowchart LR
-    A["Synthetic Markdown docs"] --> B["Local TF-IDF retrieval index"]
-    C["JSONL evaluation sets"] --> D["Evaluation runner"]
-    B --> E["Retrieved context"]
-    E --> F["Mock LLM provider"]
-    F --> G["Heuristic evaluators"]
-    G --> H["JSON + Markdown reports"]
-    G --> I["Prometheus-style metrics"]
-    B --> J["FastAPI /query"]
-    F --> J
-    I --> K["FastAPI /metrics"]
-```
+**This is proprietary, source-available software.** Public access permits viewing and personal evaluation only. Copying, modification, redistribution, commercial use, production use, and offering it as a service require prior written permission. See [LICENSE](LICENSE) for the full terms. Third-party components remain subject to their own licenses.
 
-## Evaluation Dimensions
+## Planned Extensions
 
-The Ops console keeps two evaluation populations separate:
-
-**Offline benchmark:** 30 manually authored synthetic cases label expected source documents, support terms, expected actions, output contracts, prompt families, perturbations, and risk tags. Retrieval F1, citation support, answer grounding, balanced policy accuracy, format compliance, and paired robustness each expose their own denominator and threshold. The snapshot is deterministic with the mock provider; local timing is reported separately.
-
-**Live request checks:** customer-app traffic is evaluated without reference answers using evidence-support overlap, citation validity, retrieval confidence, policy consistency, and response-contract checks. These are diagnostic proxies, not factual accuracy or retrieval recall. Uncertain requests can be reviewed and promoted into future annotated regression cases.
-
-The evaluators are intentionally transparent. They are not a replacement for human review, semantic model judges, red teaming, or production telemetry, but they make assumptions and failure signals inspectable.
-
-## Privacy And Confidentiality
-
-All content is synthetic or sanitized. The repository intentionally avoids:
-
-- Real customer, employer, or proprietary data.
-- Private prompts, traces, logs, tickets, or incidents.
-- Exact internal system designs.
-- Real API calls in the default demo.
-- Committed secrets or paid provider requirements.
-
-See [docs/confidentiality.md](docs/confidentiality.md) for the full privacy posture.
-
-## Future Work
-
-- Add optional OpenTelemetry export for traces and spans.
-- Add persisted run history and baseline-to-candidate comparisons.
-- Add provider adapters guarded by explicit environment variables and test doubles.
-- Add mutation-style robustness checks for prompt injection and citation drift.
-- Add CI quality gates that fail when pass rates regress below configured thresholds.
+- Optional OpenTelemetry traces and spans.
+- Persisted run history and baseline-to-candidate comparisons.
+- Real provider adapters guarded by explicit configuration and test doubles.
+- Mutation-style checks for prompt injection and citation drift.
+- CI quality gates for evaluation regressions.

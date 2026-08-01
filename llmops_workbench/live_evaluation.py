@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import re
 
-from llmops_portfolio.evaluators import CITATION_RE, REFUSAL_MARKERS, STOPWORDS
-from llmops_portfolio.models import LiveEvaluationRecord, LiveMetricDefinition, LiveMonitoringReport, RetrievedDocument
-from llmops_portfolio.providers import UNSAFE_KEYWORDS
+from llmops_workbench.evaluators import CITATION_RE, REFUSAL_MARKERS, STOPWORDS
+from llmops_workbench.models import LiveEvaluationRecord, LiveMetricDefinition, LiveMonitoringReport, RetrievedDocument
+from llmops_workbench.providers import UNSAFE_KEYWORDS
 
 
 LIVE_METRICS = {

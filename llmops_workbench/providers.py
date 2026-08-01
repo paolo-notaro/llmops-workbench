@@ -7,7 +7,7 @@ import re
 import time
 from typing import Protocol
 
-from llmops_portfolio.models import LLMResponse, RetrievedDocument
+from llmops_workbench.models import LLMResponse, RetrievedDocument
 
 
 UNSAFE_KEYWORDS = (

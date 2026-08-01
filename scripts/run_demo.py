@@ -8,14 +8,14 @@ from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from llmops_portfolio.config import load_settings
-from llmops_portfolio.dataset import build_dataset_profile, load_evaluation_examples
-from llmops_portfolio.evaluators import evaluate_examples
-from llmops_portfolio.providers import provider_from_env
-from llmops_portfolio.rag import LocalTfidfRAGIndex
-from llmops_portfolio.report import write_report
+from llmops_workbench.config import load_settings
+from llmops_workbench.dataset import build_dataset_profile, load_evaluation_examples
+from llmops_workbench.evaluators import evaluate_examples
+from llmops_workbench.providers import provider_from_env
+from llmops_workbench.rag import LocalTfidfRAGIndex
+from llmops_workbench.report import write_report
 
 
 def main() -> None:

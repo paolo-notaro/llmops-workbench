@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from llmops_portfolio.evaluators import evaluate_examples, evaluate_format, evaluate_safety
-from llmops_portfolio.models import EvaluationExample
-from llmops_portfolio.providers import MockLLMProvider
-from llmops_portfolio.rag import LocalTfidfRAGIndex
-from llmops_portfolio.report import write_report
+from llmops_workbench.evaluators import evaluate_examples, evaluate_format, evaluate_safety
+from llmops_workbench.models import EvaluationExample
+from llmops_workbench.providers import MockLLMProvider
+from llmops_workbench.rag import LocalTfidfRAGIndex
+from llmops_workbench.report import write_report
 
 
 def test_format_evaluator_catches_missing_citations() -> None:
