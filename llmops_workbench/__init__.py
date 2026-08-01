@@ -1,4 +1,4 @@
-"""Privacy-safe LLMOps portfolio demo package."""
+"""Privacy-safe LLMOps Workbench package."""
 
 __all__ = ["__version__"]
 

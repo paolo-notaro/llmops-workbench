@@ -89,7 +89,7 @@
           "blocks": [
             {
               "type": "paragraph",
-              "text": "The demo maps this pattern to `examples/evaluation_sets/`, `src/llmops_portfolio/evaluators.py`, and generated reports under `reports/`."
+              "text": "The demo maps this pattern to `examples/evaluation_sets/`, `llmops_workbench/evaluators.py`, and generated reports under `reports/`."
             }
           ]
         }
@@ -185,7 +185,7 @@
           "blocks": [
             {
               "type": "paragraph",
-              "text": "The demo maps this pattern to `src/llmops_portfolio/rag.py`, `src/llmops_portfolio/evaluators.py`, and the `/metrics` endpoint in `src/llmops_portfolio/app.py`."
+              "text": "The demo maps this pattern to `llmops_workbench/rag.py`, `llmops_workbench/evaluators.py`, and the `/metrics` endpoint in `llmops_workbench/app.py`."
             }
           ]
         }
@@ -280,7 +280,7 @@
           "blocks": [
             {
               "type": "paragraph",
-              "text": "The local demo uses a `MockLLMProvider` instead of a real vLLM cluster. The same provider boundary in `src/llmops_portfolio/providers.py` is where a real serving adapter would be introduced."
+              "text": "The local demo uses a `MockLLMProvider` instead of a real vLLM cluster. The same provider boundary in `llmops_workbench/providers.py` is where a real serving adapter would be introduced."
             }
           ]
         }
@@ -376,7 +376,7 @@
           "blocks": [
             {
               "type": "paragraph",
-              "text": "The demo maps this pattern to `safety_eval.jsonl`, unsafe keyword checks in `src/llmops_portfolio/evaluators.py`, and refusal behavior in `src/llmops_portfolio/providers.py`."
+              "text": "The demo maps this pattern to `safety_eval.jsonl`, unsafe keyword checks in `llmops_workbench/evaluators.py`, and refusal behavior in `llmops_workbench/providers.py`."
             }
           ]
         }
@@ -472,7 +472,7 @@
           "blocks": [
             {
               "type": "paragraph",
-              "text": "The demo maps this pattern to `src/llmops_portfolio/observability.py`, generated evaluation reports, and the FastAPI `/metrics` endpoint."
+              "text": "The demo maps this pattern to `llmops_workbench/observability.py`, generated evaluation reports, and the FastAPI `/metrics` endpoint."
             }
           ]
         }

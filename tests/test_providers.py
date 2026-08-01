@@ -1,5 +1,5 @@
-from llmops_portfolio.models import RetrievedDocument
-from llmops_portfolio.providers import MockLLMProvider
+from llmops_workbench.models import RetrievedDocument
+from llmops_workbench.providers import MockLLMProvider
 
 
 def test_mock_provider_returns_deterministic_answer_text() -> None:

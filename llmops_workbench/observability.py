@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from llmops_portfolio.models import ObservabilityBucket, ObservabilitySummary
+from llmops_workbench.models import ObservabilityBucket, ObservabilitySummary
 
 
 LATENCY_BOUNDS_MS = (0.05, 0.10, 0.25, 1.0, 10.0, 100.0, 500.0)

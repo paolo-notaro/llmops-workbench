@@ -8,7 +8,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Iterable
 
-from llmops_portfolio.models import (
+from llmops_workbench.models import (
     DatasetExampleSummary,
     DatasetFieldDefinition,
     DatasetProfile,

@@ -36,4 +36,4 @@ This write-up omits private datasets, exact score thresholds, internal review wo
 
 ## Public demo mapping
 
-The demo maps this pattern to `examples/evaluation_sets/`, `src/llmops_portfolio/evaluators.py`, and generated reports under `reports/`.
+The demo maps this pattern to `examples/evaluation_sets/`, `llmops_workbench/evaluators.py`, and generated reports under `reports/`.

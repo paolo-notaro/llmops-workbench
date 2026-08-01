@@ -8,7 +8,7 @@ from pathlib import Path
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from llmops_portfolio.models import DocumentChunk, DocumentSummary, RetrievedDocument
+from llmops_workbench.models import DocumentChunk, DocumentSummary, RetrievedDocument
 
 
 HEADING_RE = re.compile(r"^#\s+(?P<title>.+)$", re.MULTILINE)

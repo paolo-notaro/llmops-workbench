@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from llmops_portfolio.app import app, documents, get_index
-from llmops_portfolio.rag import LocalTfidfRAGIndex
+from llmops_workbench.app import app, documents, get_index
+from llmops_workbench.rag import LocalTfidfRAGIndex
 
 
 def test_retrieval_returns_relevant_document_for_known_query() -> None:

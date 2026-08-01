@@ -1,0 +1,12 @@
+[
+  {
+    "name": "delete-superseded-versions",
+    "action": {"type": "Delete"},
+    "condition": {"tagState": "any"}
+  },
+  {
+    "name": "keep-two-most-recent",
+    "action": {"type": "Keep"},
+    "mostRecentVersions": {"keepCount": 2}
+  }
+]

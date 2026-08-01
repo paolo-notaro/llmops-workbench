@@ -36,4 +36,4 @@ This public write-up omits exact cluster configuration, provider contracts, mode
 
 ## Public demo mapping
 
-The local demo uses a `MockLLMProvider` instead of a real vLLM cluster. The same provider boundary in `src/llmops_portfolio/providers.py` is where a real serving adapter would be introduced.
+The local demo uses a `MockLLMProvider` instead of a real vLLM cluster. The same provider boundary in `llmops_workbench/providers.py` is where a real serving adapter would be introduced.

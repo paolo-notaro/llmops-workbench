@@ -2,17 +2,7 @@ services:
   api:
     build:
       context: .
-      dockerfile_inline: |
-        FROM python:3.11-slim
-        WORKDIR /app
-        COPY pyproject.toml README.md ./
-        COPY src ./src
-        COPY examples ./examples
-        COPY docs ./docs
-        COPY frontend ./frontend
-        RUN pip install --no-cache-dir -e .
-        EXPOSE 8000
-        CMD ["uvicorn", "llmops_portfolio.app:app", "--host", "0.0.0.0", "--port", "8000"]
+      dockerfile: Dockerfile
     environment:
       LLM_PROVIDER: mock
       LOG_LEVEL: INFO

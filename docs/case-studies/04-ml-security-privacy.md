@@ -37,4 +37,4 @@ This write-up omits real attack logs, internal policies, sensitive detection rul
 
 ## Public demo mapping
 
-The demo maps this pattern to `safety_eval.jsonl`, unsafe keyword checks in `src/llmops_portfolio/evaluators.py`, and refusal behavior in `src/llmops_portfolio/providers.py`.
+The demo maps this pattern to `safety_eval.jsonl`, unsafe keyword checks in `llmops_workbench/evaluators.py`, and refusal behavior in `llmops_workbench/providers.py`.

@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from llmops_portfolio.app import app, evaluation_dataset, live_monitoring
-from llmops_portfolio.dataset import build_dataset_profile, dataset_version, load_evaluation_examples
-from llmops_portfolio.live_evaluation import evaluate_live_request, summarize_live_requests
-from llmops_portfolio.providers import MockLLMProvider
-from llmops_portfolio.rag import LocalTfidfRAGIndex
+from llmops_workbench.app import app, evaluation_dataset, live_monitoring
+from llmops_workbench.dataset import build_dataset_profile, dataset_version, load_evaluation_examples
+from llmops_workbench.live_evaluation import evaluate_live_request, summarize_live_requests
+from llmops_workbench.providers import MockLLMProvider
+from llmops_workbench.rag import LocalTfidfRAGIndex
 
 
 def test_dataset_profile_is_stable_and_explains_metric_populations() -> None:

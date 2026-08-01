@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 214 96" role="img" aria-labelledby="title desc">
-  <title id="title">LLMOps Portfolio</title>
-  <desc id="desc">Minimal transparent LLMOps Portfolio logo with an LLM response card mark and deployment check.</desc>
+  <title id="title">LLMOps Workbench</title>
+  <desc id="desc">Minimal transparent LLMOps Workbench logo with an LLM response card mark and deployment check.</desc>
   <defs>
     <linearGradient id="frame" x1="16" x2="76" y1="48" y2="48" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#13b8d7"/>
@@ -18,6 +18,6 @@
 
   <g fill="#18201b">
     <text x="94" y="45" font-family="Source Sans 3, Segoe UI, Arial, sans-serif" font-size="27" font-weight="700">LLMOps</text>
-    <text x="96" y="66" font-family="IBM Plex Mono, Consolas, monospace" font-size="11" font-weight="500" letter-spacing="1">PORTFOLIO</text>
+    <text x="96" y="66" font-family="IBM Plex Mono, Consolas, monospace" font-size="11" font-weight="500" letter-spacing="1">WORKBENCH</text>
   </g>
 </svg>

@@ -37,4 +37,4 @@ The public demo omits private document collections, production embeddings, telem
 
 ## Public demo mapping
 
-The demo maps this pattern to `src/llmops_portfolio/rag.py`, `src/llmops_portfolio/evaluators.py`, and the `/metrics` endpoint in `src/llmops_portfolio/app.py`.
+The demo maps this pattern to `llmops_workbench/rag.py`, `llmops_workbench/evaluators.py`, and the `/metrics` endpoint in `llmops_workbench/app.py`.

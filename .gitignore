@@ -24,6 +24,7 @@ env/
 *.pem
 *.key
 secrets/
+gha-creds-*.json
 
 # Generated reports and runtime output
 reports/

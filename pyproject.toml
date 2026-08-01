@@ -3,13 +3,32 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "llmops-portfolio"
+name = "llmops-workbench"
 version = "0.1.0"
-description = "Privacy-safe LLMOps portfolio demo for evaluation, RAG observability, and local-first GenAI operations."
+description = "Local, privacy-safe workbench for LLM evaluation, RAG observability, and GenAI operations."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = "LicenseRef-Proprietary"
+license-files = ["LICENSE"]
 authors = [{ name = "Paolo Notaro" }]
+keywords = [
+  "llmops",
+  "rag",
+  "llm-evaluation",
+  "observability",
+  "generative-ai",
+  "fastapi",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Framework :: FastAPI",
+  "Intended Audience :: Developers",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
   "fastapi>=0.110",
   "uvicorn>=0.27",
@@ -21,10 +40,17 @@ dependencies = [
   "python-dotenv>=1.0"
 ]
 
+[project.urls]
+Homepage = "https://github.com/paolo-notaro/llmops-workbench"
+Repository = "https://github.com/paolo-notaro/llmops-workbench"
+Documentation = "https://github.com/paolo-notaro/llmops-workbench#readme"
+Issues = "https://github.com/paolo-notaro/llmops-workbench/issues"
+
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["llmops_workbench*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["."]
 addopts = "-q -s"
