@@ -76,7 +76,6 @@ def evaluate_live_request(
     return LiveEvaluationRecord(
         request_id=request_id,
         timestamp=timestamp,
-        query=query,
         provider=provider,
         latency_ms=round(latency_ms, 3),
         retrieved_count=len([doc for doc in retrieved_docs if doc.score > 0]),

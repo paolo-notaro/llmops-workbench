@@ -174,17 +174,6 @@ class QueryResponse(BaseModel):
     live_metrics: dict[str, float] = Field(default_factory=dict)
 
 
-class QueryTrace(BaseModel):
-    """Latest query trace exposed to the Ops console."""
-
-    query: str | None = None
-    answer: str | None = None
-    provider: str | None = None
-    latency_ms: float = 0.0
-    retrieved_docs: list[RetrievedDocument] = Field(default_factory=list)
-    quality_checks: dict[str, bool] = Field(default_factory=dict)
-
-
 class DatasetFieldDefinition(BaseModel):
     """Meaning of one human-authored ground-truth field."""
 
@@ -239,7 +228,6 @@ class LiveEvaluationRecord(BaseModel):
 
     request_id: str
     timestamp: str
-    query: str
     provider: str
     latency_ms: float = Field(ge=0.0)
     retrieved_count: int = Field(ge=0)
