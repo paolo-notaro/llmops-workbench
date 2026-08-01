@@ -26,6 +26,18 @@ flowchart TD
 - **Composable:** retrieval, providers, evaluators, reporting, and API layers are separated.
 - **Operationally credible:** the demo includes reports, metrics, latency tracking, and quality gates that mirror production concerns.
 
+## Target Unifying Abstraction
+
+The target architecture treats every request as one canonical trace. Live HTTP traffic and offline dataset replay will use the same execution path and emit the same trace schema. Retrieval, generation, guardrail verdicts, timings, token usage, and pinned run configuration belong to that trace; evaluation, observability, and governance consume traces instead of maintaining parallel request representations.
+
+A single comparison engine will run configuration X and configuration Y over the same versioned dataset and report per-dimension changes with uncertainty. CI will use it headlessly against a committed baseline, while the static Ops console will expose the same result schema for prompt A/B inspection.
+
+The hosted Cloud Run service remains deterministic and mock-only. Real-provider access is a local, explicit opt-in because a public paid-model endpoint would create uncontrolled cost and prompt-injection exposure.
+
+## Scope Boundaries
+
+The workbench is a portfolio demonstration, not a production serving platform. Production availability, deep retrieval, Kubernetes orchestration, multi-tenancy, and authentication or authorization are explicit non-goals. Related case studies describe wider industry patterns without claiming those capabilities are implemented here.
+
 ## Runtime Flow
 
 1. Synthetic Markdown documents are loaded from `examples/synthetic_docs/`.
