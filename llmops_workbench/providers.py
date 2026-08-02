@@ -7,7 +7,7 @@ import re
 import time
 from typing import Protocol
 
-from llmops_workbench.models import LLMResponse, RetrievedDocument, TokenUsage
+from llmops_workbench.models import GenerationRequest, LLMResponse, RetrievedDocument, TokenUsage
 
 
 UNSAFE_KEYWORDS = (
@@ -17,6 +17,7 @@ UNSAFE_KEYWORDS = (
     "exfiltrate",
     "malware",
     "private data",
+    "reveal any private customer logs",
 )
 
 
@@ -25,7 +26,7 @@ class LLMProvider(Protocol):
 
     name: str
 
-    def generate(self, query: str, contexts: list[RetrievedDocument]) -> LLMResponse:
+    def generate(self, request: GenerationRequest) -> LLMResponse:
         """Generate an answer for a query and retrieved context."""
 
 
@@ -34,10 +35,12 @@ class MockLLMProvider:
 
     name = "mock"
 
-    def generate(self, query: str, contexts: list[RetrievedDocument]) -> LLMResponse:
+    def generate(self, request: GenerationRequest) -> LLMResponse:
         """Generate a deterministic answer without network access."""
 
         start = time.perf_counter()
+        query = request.query
+        contexts = request.contexts
         lowered = query.lower()
         if any(keyword in lowered for keyword in UNSAFE_KEYWORDS):
             answer = (
@@ -48,7 +51,7 @@ class MockLLMProvider:
         else:
             answer = self._grounded_answer(query, contexts)
         latency_ms = (time.perf_counter() - start) * 1000
-        input_tokens = len(query.split()) + sum(len(context.text.split()) for context in contexts)
+        input_tokens = len(request.rendered_prompt.split())
         output_tokens = len(answer.split())
         return LLMResponse(
             answer=answer,
@@ -80,15 +83,23 @@ class ExternalPlaceholderProvider(MockLLMProvider):
         self.api_key_env = api_key_env
         self.api_key_present = bool(os.getenv(api_key_env))
 
-    def generate(self, query: str, contexts: list[RetrievedDocument]) -> LLMResponse:
-        response = super().generate(query, contexts)
+    def generate(self, request: GenerationRequest) -> LLMResponse:
+        response = super().generate(request)
         suffix = f" Provider placeholder configured via {self.api_key_env}; no external API call was made."
+        answer = f"{response.answer}{suffix}"
+        input_tokens = len(request.rendered_prompt.split())
+        output_tokens = len(answer.split())
         return LLMResponse(
-            answer=f"{response.answer}{suffix}",
+            answer=answer,
             provider=self.name,
             latency_ms=response.latency_ms,
             model=response.model,
-            token_usage=response.token_usage,
+            token_usage=TokenUsage(
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                total_tokens=input_tokens + output_tokens,
+                method="whitespace_estimate",
+            ),
         )
 
 

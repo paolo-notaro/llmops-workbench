@@ -97,7 +97,7 @@ def evaluate_live_trace(trace: RequestTrace) -> LiveEvaluationRecord:
         answer=trace.answer,
         provider=trace.provider,
         latency_ms=trace.timings.generation_ms,
-        retrieved_docs=trace.retrieved_docs,
+        retrieved_docs=trace.retrieval.documents(),
     )
     trace.timings.evaluation_ms = round((time.perf_counter() - evaluation_start) * 1000, 3)
     trace.timings.total_ms = round(trace.timings.total_ms + trace.timings.evaluation_ms, 3)

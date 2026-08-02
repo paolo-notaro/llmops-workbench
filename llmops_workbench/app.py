@@ -208,7 +208,7 @@ def query(request: QueryRequest) -> QueryResponse:
         answer=trace.answer,
         provider=trace.provider,
         latency_ms=trace.timings.generation_ms,
-        retrieved_docs=trace.retrieved_docs,
+        retrieved_docs=trace.retrieval.documents(),
         quality_checks=quality_checks,
         live_metrics=live_record.metrics,
         trace_id=trace.trace_id,

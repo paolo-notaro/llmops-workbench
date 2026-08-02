@@ -2,7 +2,8 @@ from pathlib import Path
 
 from llmops_workbench.evaluators import evaluate_examples
 from llmops_workbench.execution import execute_request
-from llmops_workbench.models import EvaluationExample, RequestTrace
+from llmops_workbench.dataset import load_evaluation_examples
+from llmops_workbench.models import EvaluationExample, LLMResponse, RequestTrace
 from llmops_workbench.providers import MockLLMProvider
 from llmops_workbench.rag import LocalTfidfRAGIndex
 
@@ -27,7 +28,11 @@ def test_live_and_evaluation_use_the_same_trace_schema() -> None:
     assert set(live_trace.model_dump()) == set(evaluation_trace.model_dump())
     assert live_trace.config_id == evaluation_trace.config_id
     assert live_trace.rendered_prompt == evaluation_trace.rendered_prompt
-    assert live_trace.retrieved_docs == evaluation_trace.retrieved_docs
+    assert live_trace.retrieval.strategy == evaluation_trace.retrieval.strategy
+    assert live_trace.retrieval.top_k == evaluation_trace.retrieval.top_k
+    assert live_trace.retrieval.minimum_score is None
+    assert live_trace.retrieval.candidate_count == evaluation_trace.retrieval.candidate_count
+    assert live_trace.retrieval.results == evaluation_trace.retrieval.results
     assert live_trace.answer == evaluation_trace.answer
     assert evaluation_trace.example_id == "trace-case"
     assert evaluation_trace.dataset_id == "trace-test"
@@ -40,7 +45,7 @@ def test_unsafe_input_short_circuits_provider_generation() -> None:
     class FailingProvider:
         name = "must-not-run"
 
-        def generate(self, query, contexts):
+        def generate(self, request):
             raise AssertionError("provider must not be called for refused input")
 
     index = LocalTfidfRAGIndex.from_directory(Path("examples/synthetic_docs"))
@@ -55,6 +60,55 @@ def test_unsafe_input_short_circuits_provider_generation() -> None:
     assert trace.guardrail_verdicts[0].action == "refuse"
     assert trace.guardrail_verdicts[1].passed
     assert "cannot help" in trace.answer.lower()
+
+
+def test_every_committed_refusal_case_short_circuits_provider_generation() -> None:
+    class FailingProvider:
+        name = "must-not-run"
+
+        def generate(self, request):
+            raise AssertionError(f"provider received refusal case: {request.query}")
+
+    index = LocalTfidfRAGIndex.from_directory(Path("examples/synthetic_docs"))
+    refusal_examples = [
+        example for example in load_evaluation_examples(Path("datasets/ground_truth"))
+        if example.expected_action == "refuse"
+    ]
+
+    traces = [execute_request(example.query, index, FailingProvider(), mode="evaluation") for example in refusal_examples]
+
+    assert len(traces) == 4
+    assert all(trace.guardrail_verdicts[0].action == "refuse" for trace in traces)
+
+
+def test_provider_receives_the_exact_prompt_recorded_in_the_trace() -> None:
+    class CapturingProvider:
+        name = "capture"
+        request = None
+
+        def generate(self, request):
+            self.request = request
+            return LLMResponse(answer="Grounded answer [doc:deployment_guide]", provider=self.name, latency_ms=0.1)
+
+    index = LocalTfidfRAGIndex.from_directory(Path("examples/synthetic_docs"))
+    provider = CapturingProvider()
+    trace = execute_request("How should rollback work?", index, provider, mode="live")
+
+    assert provider.request is not None
+    assert provider.request.rendered_prompt == trace.rendered_prompt
+    assert provider.request.contexts == trace.retrieval.documents()
+
+
+def test_retrieval_trace_explains_no_threshold_top_k_fill() -> None:
+    index = LocalTfidfRAGIndex.from_directory(Path("examples/synthetic_docs"))
+    trace = execute_request("zzzxxyy unmatchedtoken", index, MockLLMProvider(), mode="live", top_k=2)
+
+    assert trace.retrieval.strategy == "tfidf_cosine_similarity"
+    assert trace.retrieval.minimum_score is None
+    assert trace.retrieval.candidate_count > len(trace.retrieval.results)
+    assert [result.rank for result in trace.retrieval.results] == [1, 2]
+    assert all(result.score == 0 for result in trace.retrieval.results)
+    assert all(result.selection_reason == "top_k_fill" for result in trace.retrieval.results)
 
 
 def test_query_response_adds_trace_identity_without_removing_existing_fields() -> None:

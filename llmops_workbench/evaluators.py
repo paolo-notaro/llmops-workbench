@@ -166,7 +166,7 @@ def evaluate_examples(
         )
         records.append(evaluate_response(
             example,
-            trace.retrieved_docs,
+            trace.retrieval.documents(),
             response,
             max_latency_ms=max_latency_ms,
             trace=trace,

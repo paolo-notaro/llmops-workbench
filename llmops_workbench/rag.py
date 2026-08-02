@@ -98,6 +98,12 @@ class LocalTfidfRAGIndex:
 
         return build_document_summaries(self._chunks)
 
+    @property
+    def candidate_count(self) -> int:
+        """Return the number of chunks scored for every query."""
+
+        return len(self._chunks)
+
     @classmethod
     def from_directory(cls, docs_dir: Path) -> "LocalTfidfRAGIndex":
         """Build an index from Markdown files in a directory."""

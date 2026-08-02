@@ -26,6 +26,38 @@ class RetrievedDocument(DocumentChunk):
     score: float = Field(ge=0.0)
 
 
+class RetrievalMatch(RetrievedDocument):
+    """One ranked retrieval result with inspectable match evidence."""
+
+    rank: int = Field(ge=1)
+    matched_terms: list[str] = Field(default_factory=list)
+    selection_reason: Literal["ranked_similarity", "top_k_fill"]
+
+
+class RetrievalTrace(BaseModel):
+    """Configuration and results for one retrieval stage."""
+
+    strategy: str
+    top_k: int = Field(ge=1)
+    minimum_score: float | None = Field(default=None, ge=0.0)
+    candidate_count: int = Field(ge=0)
+    duration_ms: float = Field(ge=0.0)
+    results: list[RetrievalMatch]
+
+    def documents(self) -> list[RetrievedDocument]:
+        """Return provider/evaluator documents without trace-only annotations."""
+
+        return [RetrievedDocument.model_validate(result.model_dump()) for result in self.results]
+
+
+class GenerationRequest(BaseModel):
+    """Exact structured input passed across the provider boundary."""
+
+    query: str
+    rendered_prompt: str
+    contexts: list[RetrievedDocument]
+
+
 class GuardrailVerdict(BaseModel):
     """One explicit policy decision recorded during request execution."""
 
@@ -71,7 +103,7 @@ class RequestTrace(BaseModel):
     dataset_version: str | None = None
     example_id: str | None = None
     guardrail_verdicts: list[GuardrailVerdict]
-    retrieved_docs: list[RetrievedDocument]
+    retrieval: RetrievalTrace
     rendered_prompt: str
     answer: str
     provider: str

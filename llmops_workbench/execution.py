@@ -4,14 +4,18 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import time
 from datetime import UTC, datetime
 from typing import Literal
 from uuid import uuid4
 
 from llmops_workbench.models import (
+    GenerationRequest,
     GuardrailVerdict,
     RequestTrace,
+    RetrievalMatch,
+    RetrievalTrace,
     TokenUsage,
     TraceTimings,
 )
@@ -47,7 +51,11 @@ def execute_request(
     total_start = time.perf_counter()
     config_snapshot = {
         "prompt": {"id": PROMPT_ID, "version": PROMPT_VERSION},
-        "retriever": {"kind": "tfidf", "top_k": top_k},
+        "retriever": {
+            "strategy": "tfidf_cosine_similarity",
+            "top_k": top_k,
+            "minimum_score": None,
+        },
         "guardrail": {"policy_id": POLICY_ID, "version": POLICY_VERSION},
         "provider": {"name": provider.name},
     }
@@ -61,6 +69,13 @@ def execute_request(
     retrieved_docs = index.query(query, top_k=top_k)
     retrieval_ms = _elapsed_ms(stage_start)
     rendered_prompt = render_prompt(query, retrieved_docs)
+    retrieval = build_retrieval_trace(
+        query,
+        retrieved_docs,
+        top_k=top_k,
+        candidate_count=index.candidate_count,
+        duration_ms=retrieval_ms,
+    )
 
     if input_verdict.action == "refuse":
         answer = REFUSAL_ANSWER
@@ -69,7 +84,11 @@ def execute_request(
         model = f"{POLICY_ID}-v{POLICY_VERSION}"
         token_usage = _estimate_usage(rendered_prompt, answer)
     else:
-        response = provider.generate(query, retrieved_docs)
+        response = provider.generate(GenerationRequest(
+            query=query,
+            rendered_prompt=rendered_prompt,
+            contexts=retrieved_docs,
+        ))
         answer = response.answer
         generation_ms = response.latency_ms
         provider_name = response.provider
@@ -90,7 +109,7 @@ def execute_request(
         dataset_version=dataset_version,
         example_id=example_id,
         guardrail_verdicts=[input_verdict, output_verdict],
-        retrieved_docs=retrieved_docs,
+        retrieval=retrieval,
         rendered_prompt=rendered_prompt,
         answer=answer,
         provider=provider_name,
@@ -136,6 +155,40 @@ def evaluate_output_guardrail(query: str, answer: str) -> GuardrailVerdict:
 def render_prompt(query: str, retrieved_docs) -> str:
     context = "\n\n".join(f"[{doc.chunk_id}] {doc.text}" for doc in retrieved_docs)
     return f"Answer only from the supplied synthetic context and cite sources.\n\nQuestion: {query}\n\nContext:\n{context}"
+
+
+def build_retrieval_trace(
+    query: str,
+    retrieved_docs,
+    *,
+    top_k: int,
+    candidate_count: int,
+    duration_ms: float,
+) -> RetrievalTrace:
+    """Explain which chunks were selected by the current no-threshold top-k strategy."""
+
+    query_terms = _terms(query)
+    results = [
+        RetrievalMatch(
+            **document.model_dump(),
+            rank=rank,
+            matched_terms=sorted(query_terms & _terms(document.text)),
+            selection_reason="ranked_similarity" if document.score > 0 else "top_k_fill",
+        )
+        for rank, document in enumerate(retrieved_docs, start=1)
+    ]
+    return RetrievalTrace(
+        strategy="tfidf_cosine_similarity",
+        top_k=top_k,
+        minimum_score=None,
+        candidate_count=candidate_count,
+        duration_ms=round(duration_ms, 3),
+        results=results,
+    )
+
+
+def _terms(text: str) -> set[str]:
+    return set(re.findall(r"[a-zA-Z][a-zA-Z0-9_-]{2,}", text.lower()))
 
 
 def _stable_id(payload: dict[str, object]) -> str:
