@@ -61,6 +61,24 @@ Rolling results are available from `GET /evaluation/live`. Weak signals identify
 
 The evaluators provide transparent baseline signals. A production evaluation program also needs human review, semantic judges, red teaming, and provider telemetry.
 
+## Architecture Direction
+
+The workbench is evolving around one unifying object: a request trace. Interactive traffic and offline replay should pass through the same request pipeline and produce the same trace shape; evaluation, guardrails, observability, and governance then read that trace for their own purposes. Configuration comparison is likewise intended to have one engine with two surfaces: a headless baseline comparison in CI and an interactive prompt comparison in the Ops console.
+
+The public deployment intentionally uses deterministic mock generation. The current external-provider options are placeholders that make no external API calls. A future real-provider adapter will be an explicit local-only integration: accepting arbitrary public prompts while calling a paid model would create an unbounded-cost and prompt-injection surface. The mock-only public runtime is therefore a design boundary, not a missing production integration.
+
+## Explicit Non-goals
+
+This repository demonstrates inspectable LLMOps workflows; it is not intended to provide:
+
+- Production serving or availability guarantees.
+- Deep or state-of-the-art retrieval infrastructure.
+- Kubernetes orchestration.
+- Multi-tenancy.
+- Authentication or authorization.
+
+The case studies discuss some of these production concerns for context, but those discussions do not imply that the workbench implements them.
+
 ## System Design
 
 ```mermaid
@@ -140,6 +158,10 @@ See [docs/confidentiality.md](docs/confidentiality.md) for the complete privacy 
 
 ## Planned Extensions
 
+- A canonical request trace shared by interactive traffic and offline replay.
+- Versioned prompt and run-configuration definitions.
+- Baseline-to-candidate comparison shared by CI and the Ops console.
+- Privacy-safe governance evidence generated from synthetic offline traces.
 - Optional OpenTelemetry traces and spans.
 - Persisted run history and baseline-to-candidate comparisons.
 - Real provider adapters guarded by explicit configuration and test doubles.
