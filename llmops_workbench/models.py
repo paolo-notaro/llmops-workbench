@@ -26,6 +26,60 @@ class RetrievedDocument(DocumentChunk):
     score: float = Field(ge=0.0)
 
 
+class GuardrailVerdict(BaseModel):
+    """One explicit policy decision recorded during request execution."""
+
+    stage: Literal["input", "output"]
+    policy_id: str
+    policy_version: str
+    action: Action
+    passed: bool
+    matched_rules: list[str] = Field(default_factory=list)
+    reason: str
+
+
+class TokenUsage(BaseModel):
+    """Provider-reported or transparently estimated token usage."""
+
+    input_tokens: int = Field(ge=0)
+    output_tokens: int = Field(ge=0)
+    total_tokens: int = Field(ge=0)
+    method: Literal["provider_reported", "whitespace_estimate"]
+
+
+class TraceTimings(BaseModel):
+    """Measured latency for each canonical request stage."""
+
+    guardrail_ms: float = Field(ge=0.0)
+    retrieval_ms: float = Field(ge=0.0)
+    generation_ms: float = Field(ge=0.0)
+    evaluation_ms: float = Field(default=0.0, ge=0.0)
+    total_ms: float = Field(ge=0.0)
+
+
+class RequestTrace(BaseModel):
+    """Canonical result of both interactive execution and offline replay."""
+
+    schema_version: str = "1"
+    trace_id: str
+    mode: Literal["live", "evaluation"]
+    timestamp: str
+    query: str
+    config_id: str
+    config_snapshot: dict[str, Any]
+    dataset_id: str | None = None
+    dataset_version: str | None = None
+    example_id: str | None = None
+    guardrail_verdicts: list[GuardrailVerdict]
+    retrieved_docs: list[RetrievedDocument]
+    rendered_prompt: str
+    answer: str
+    provider: str
+    model: str
+    token_usage: TokenUsage
+    timings: TraceTimings
+
+
 class DocumentSummary(BaseModel):
     """Public metadata for one indexed synthetic document."""
 
@@ -64,6 +118,8 @@ class LLMResponse(BaseModel):
     answer: str
     provider: str
     latency_ms: float = Field(ge=0.0)
+    model: str = "unknown"
+    token_usage: TokenUsage | None = None
 
 
 class DimensionResult(BaseModel):
@@ -126,6 +182,7 @@ class EvaluationRecord(BaseModel):
     perturbation: str | None = None
     risk_tags: list[str] = Field(default_factory=list)
     metric_scores: dict[str, float] = Field(default_factory=dict)
+    trace: RequestTrace | None = None
 
 
 class SummaryMetrics(BaseModel):
@@ -172,6 +229,8 @@ class QueryResponse(BaseModel):
     retrieved_docs: list[RetrievedDocument]
     quality_checks: dict[str, bool] = Field(default_factory=dict)
     live_metrics: dict[str, float] = Field(default_factory=dict)
+    trace_id: str | None = None
+    config_id: str | None = None
 
 
 class DatasetFieldDefinition(BaseModel):

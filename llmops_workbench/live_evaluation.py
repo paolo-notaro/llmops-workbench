@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import re
+import time
 
 from llmops_workbench.evaluators import CITATION_RE, REFUSAL_MARKERS, STOPWORDS
-from llmops_workbench.models import LiveEvaluationRecord, LiveMetricDefinition, LiveMonitoringReport, RetrievedDocument
+from llmops_workbench.models import LiveEvaluationRecord, LiveMetricDefinition, LiveMonitoringReport, RequestTrace, RetrievedDocument
 from llmops_workbench.providers import UNSAFE_KEYWORDS
 
 
@@ -83,6 +84,24 @@ def evaluate_live_request(
         checks=checks,
         requires_review=not all(checks.values()),
     )
+
+
+def evaluate_live_trace(trace: RequestTrace) -> LiveEvaluationRecord:
+    """Read reference-free quality signals from a canonical request trace."""
+
+    evaluation_start = time.perf_counter()
+    record = evaluate_live_request(
+        request_id=trace.trace_id,
+        timestamp=trace.timestamp,
+        query=trace.query,
+        answer=trace.answer,
+        provider=trace.provider,
+        latency_ms=trace.timings.generation_ms,
+        retrieved_docs=trace.retrieved_docs,
+    )
+    trace.timings.evaluation_ms = round((time.perf_counter() - evaluation_start) * 1000, 3)
+    trace.timings.total_ms = round(trace.timings.total_ms + trace.timings.evaluation_ms, 3)
+    return record
 
 
 def summarize_live_requests(

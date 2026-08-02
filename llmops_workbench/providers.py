@@ -7,7 +7,7 @@ import re
 import time
 from typing import Protocol
 
-from llmops_workbench.models import LLMResponse, RetrievedDocument
+from llmops_workbench.models import LLMResponse, RetrievedDocument, TokenUsage
 
 
 UNSAFE_KEYWORDS = (
@@ -48,7 +48,20 @@ class MockLLMProvider:
         else:
             answer = self._grounded_answer(query, contexts)
         latency_ms = (time.perf_counter() - start) * 1000
-        return LLMResponse(answer=answer, provider=self.name, latency_ms=latency_ms)
+        input_tokens = len(query.split()) + sum(len(context.text.split()) for context in contexts)
+        output_tokens = len(answer.split())
+        return LLMResponse(
+            answer=answer,
+            provider=self.name,
+            model="deterministic-extractive-v1",
+            latency_ms=latency_ms,
+            token_usage=TokenUsage(
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                total_tokens=input_tokens + output_tokens,
+                method="whitespace_estimate",
+            ),
+        )
 
     def _grounded_answer(self, query: str, contexts: list[RetrievedDocument]) -> str:
         citations = " ".join(f"[doc:{doc.doc_id}]" for doc in contexts[:2])
@@ -74,6 +87,8 @@ class ExternalPlaceholderProvider(MockLLMProvider):
             answer=f"{response.answer}{suffix}",
             provider=self.name,
             latency_ms=response.latency_ms,
+            model=response.model,
+            token_usage=response.token_usage,
         )
 
 
