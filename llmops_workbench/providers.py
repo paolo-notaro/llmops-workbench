@@ -25,6 +25,7 @@ class LLMProvider(Protocol):
     """Protocol implemented by LLM providers."""
 
     name: str
+    model: str
 
     def generate(self, request: GenerationRequest) -> LLMResponse:
         """Generate an answer for a query and retrieved context."""
@@ -34,6 +35,7 @@ class MockLLMProvider:
     """Deterministic local provider used by default."""
 
     name = "mock"
+    model = "deterministic-extractive-v1"
 
     def generate(self, request: GenerationRequest) -> LLMResponse:
         """Generate a deterministic answer without network access."""
@@ -56,7 +58,7 @@ class MockLLMProvider:
         return LLMResponse(
             answer=answer,
             provider=self.name,
-            model="deterministic-extractive-v1",
+            model=self.model,
             latency_ms=latency_ms,
             token_usage=TokenUsage(
                 input_tokens=input_tokens,

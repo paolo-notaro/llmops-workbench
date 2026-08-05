@@ -44,6 +44,7 @@ def test_live_and_evaluation_use_the_same_trace_schema() -> None:
 def test_unsafe_input_short_circuits_provider_generation() -> None:
     class FailingProvider:
         name = "must-not-run"
+        model = "must-not-run-v1"
 
         def generate(self, request):
             raise AssertionError("provider must not be called for refused input")
@@ -60,11 +61,16 @@ def test_unsafe_input_short_circuits_provider_generation() -> None:
     assert trace.guardrail_verdicts[0].action == "refuse"
     assert trace.guardrail_verdicts[1].passed
     assert "cannot help" in trace.answer.lower()
+    assert trace.token_usage.input_tokens == 0
+    assert trace.token_usage.output_tokens == 0
+    assert trace.token_usage.total_tokens == 0
+    assert trace.token_usage.method == "not_applicable"
 
 
 def test_every_committed_refusal_case_short_circuits_provider_generation() -> None:
     class FailingProvider:
         name = "must-not-run"
+        model = "must-not-run-v1"
 
         def generate(self, request):
             raise AssertionError(f"provider received refusal case: {request.query}")
@@ -84,6 +90,7 @@ def test_every_committed_refusal_case_short_circuits_provider_generation() -> No
 def test_provider_receives_the_exact_prompt_recorded_in_the_trace() -> None:
     class CapturingProvider:
         name = "capture"
+        model = "capture-v1"
         request = None
 
         def generate(self, request):
@@ -109,6 +116,35 @@ def test_retrieval_trace_explains_no_threshold_top_k_fill() -> None:
     assert [result.rank for result in trace.retrieval.results] == [1, 2]
     assert all(result.score == 0 for result in trace.retrieval.results)
     assert all(result.selection_reason == "top_k_fill" for result in trace.retrieval.results)
+
+
+def test_retrieval_matches_use_the_tfidf_analyzer() -> None:
+    index = LocalTfidfRAGIndex.from_directory(Path("examples/synthetic_docs"))
+    trace = execute_request("AI and the governance", index, MockLLMProvider(), mode="live", top_k=1)
+
+    assert "ai" in trace.retrieval.results[0].matched_terms
+    assert "the" not in trace.retrieval.results[0].matched_terms
+    assert "and" not in trace.retrieval.results[0].matched_terms
+
+
+def test_provider_model_changes_the_configuration_identity() -> None:
+    class ModelProvider:
+        name = "same-adapter"
+
+        def __init__(self, model: str) -> None:
+            self.model = model
+
+        def generate(self, request):
+            return LLMResponse(answer="Grounded answer [doc:deployment_guide]", provider=self.name,
+                               model=self.model, latency_ms=0.1)
+
+    index = LocalTfidfRAGIndex.from_directory(Path("examples/synthetic_docs"))
+    first = execute_request("How should rollback work?", index, ModelProvider("model-a"), mode="live")
+    second = execute_request("How should rollback work?", index, ModelProvider("model-b"), mode="live")
+
+    assert first.config_id != second.config_id
+    assert first.config_snapshot["provider"]["model"] == "model-a"
+    assert second.config_snapshot["provider"]["model"] == "model-b"
 
 
 def test_query_response_adds_trace_identity_without_removing_existing_fields() -> None:

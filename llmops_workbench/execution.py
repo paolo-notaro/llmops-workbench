@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 import time
 from datetime import UTC, datetime
 from typing import Literal
@@ -57,7 +56,7 @@ def execute_request(
             "minimum_score": None,
         },
         "guardrail": {"policy_id": POLICY_ID, "version": POLICY_VERSION},
-        "provider": {"name": provider.name},
+        "provider": {"name": provider.name, "model": provider.model},
     }
     config_id = _stable_id(config_snapshot)
 
@@ -75,6 +74,7 @@ def execute_request(
         top_k=top_k,
         candidate_count=index.candidate_count,
         duration_ms=retrieval_ms,
+        index=index,
     )
 
     if input_verdict.action == "refuse":
@@ -82,7 +82,12 @@ def execute_request(
         generation_ms = 0.0
         provider_name = "guardrail"
         model = f"{POLICY_ID}-v{POLICY_VERSION}"
-        token_usage = _estimate_usage(rendered_prompt, answer)
+        token_usage = TokenUsage(
+            input_tokens=0,
+            output_tokens=0,
+            total_tokens=0,
+            method="not_applicable",
+        )
     else:
         response = provider.generate(GenerationRequest(
             query=query,
@@ -164,15 +169,15 @@ def build_retrieval_trace(
     top_k: int,
     candidate_count: int,
     duration_ms: float,
+    index: LocalTfidfRAGIndex,
 ) -> RetrievalTrace:
     """Explain which chunks were selected by the current no-threshold top-k strategy."""
 
-    query_terms = _terms(query)
     results = [
         RetrievalMatch(
             **document.model_dump(),
             rank=rank,
-            matched_terms=sorted(query_terms & _terms(document.text)),
+            matched_terms=index.matching_features(query, document.text),
             selection_reason="ranked_similarity" if document.score > 0 else "top_k_fill",
         )
         for rank, document in enumerate(retrieved_docs, start=1)
@@ -185,10 +190,6 @@ def build_retrieval_trace(
         duration_ms=round(duration_ms, 3),
         results=results,
     )
-
-
-def _terms(text: str) -> set[str]:
-    return set(re.findall(r"[a-zA-Z][a-zA-Z0-9_-]{2,}", text.lower()))
 
 
 def _stable_id(payload: dict[str, object]) -> str:

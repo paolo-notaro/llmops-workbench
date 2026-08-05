@@ -91,6 +91,7 @@ class LocalTfidfRAGIndex:
         self._chunks = chunks
         self._vectorizer = TfidfVectorizer(stop_words="english", ngram_range=(1, 2))
         self._matrix = self._vectorizer.fit_transform([chunk.text for chunk in chunks])
+        self._analyzer = self._vectorizer.build_analyzer()
 
     @property
     def document_summaries(self) -> list[DocumentSummary]:
@@ -103,6 +104,11 @@ class LocalTfidfRAGIndex:
         """Return the number of chunks scored for every query."""
 
         return len(self._chunks)
+
+    def matching_features(self, query: str, document_text: str) -> list[str]:
+        """Return actual unigram/bigram features shared by query and document."""
+
+        return sorted(set(self._analyzer(query)) & set(self._analyzer(document_text)))
 
     @classmethod
     def from_directory(cls, docs_dir: Path) -> "LocalTfidfRAGIndex":

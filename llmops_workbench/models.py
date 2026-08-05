@@ -76,7 +76,7 @@ class TokenUsage(BaseModel):
     input_tokens: int = Field(ge=0)
     output_tokens: int = Field(ge=0)
     total_tokens: int = Field(ge=0)
-    method: Literal["provider_reported", "whitespace_estimate"]
+    method: Literal["provider_reported", "whitespace_estimate", "not_applicable"]
 
 
 class TraceTimings(BaseModel):
