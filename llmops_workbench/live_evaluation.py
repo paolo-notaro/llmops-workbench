@@ -7,7 +7,7 @@ import time
 
 from llmops_workbench.evaluators import CITATION_RE, REFUSAL_MARKERS, STOPWORDS
 from llmops_workbench.models import LiveEvaluationRecord, LiveMetricDefinition, LiveMonitoringReport, RequestTrace, RetrievedDocument
-from llmops_workbench.providers import UNSAFE_KEYWORDS
+from llmops_workbench.policy import decide_input_policy
 
 
 LIVE_METRICS = {
@@ -28,7 +28,7 @@ LIVE_METRICS = {
     ),
     "policy_consistency": (
         "Policy consistency", 1.0,
-        "Unsafe-keyword routing agrees with refusal behavior",
+        "Input policy routing agrees with refusal behavior",
         "1[unsafe query equals refusal route]",
     ),
     "response_contract": (
@@ -59,7 +59,7 @@ def evaluate_live_request(
     evidence_support = 1.0 if refusal else _ratio(len(answer_terms & evidence_terms), len(answer_terms))
     citation_validity = 1.0 if refusal else _ratio(len(cited_docs & retrieved_ids), len(cited_docs))
     retrieval_confidence = _retrieval_confidence(retrieved_docs)
-    unsafe = any(keyword in query.lower() for keyword in UNSAFE_KEYWORDS)
+    unsafe = decide_input_policy(query).refuses
     policy_consistency = 1.0 if unsafe == refusal else 0.0
     word_count = len(answer.split())
     contract_passed = (

@@ -18,19 +18,13 @@ from llmops_workbench.models import (
     TokenUsage,
     TraceTimings,
 )
-from llmops_workbench.providers import LLMProvider, UNSAFE_KEYWORDS
+from llmops_workbench.policy import POLICY_ID, POLICY_VERSION, REFUSAL_ANSWER, decide_input_policy
+from llmops_workbench.providers import LLMProvider
 from llmops_workbench.rag import LocalTfidfRAGIndex
 
 
-POLICY_ID = "public-demo-keyword-policy"
-POLICY_VERSION = "1"
 PROMPT_ID = "implicit-grounded-prompt"
 PROMPT_VERSION = "1"
-REFUSAL_ANSWER = (
-    "I cannot help with requests to steal credentials, bypass access controls, "
-    "or exfiltrate private data. Use approved incident response and security "
-    "review workflows instead."
-)
 
 
 def execute_request(
@@ -130,20 +124,24 @@ def execute_request(
 
 
 def evaluate_input_guardrail(query: str) -> GuardrailVerdict:
-    matches = [keyword for keyword in UNSAFE_KEYWORDS if keyword in query.lower()]
+    """Apply the named input policy rules and record which ones fired."""
+
+    decision = decide_input_policy(query)
     return GuardrailVerdict(
         stage="input",
         policy_id=POLICY_ID,
         policy_version=POLICY_VERSION,
-        action="refuse" if matches else "answer",
-        passed=not matches,
-        matched_rules=matches,
-        reason="Unsafe request pattern detected." if matches else "No input policy rule matched.",
+        action=decision.action,
+        passed=not decision.refuses,
+        matched_rules=decision.matched_rules,
+        reason=decision.reason,
     )
 
 
 def evaluate_output_guardrail(query: str, answer: str) -> GuardrailVerdict:
-    unsafe = any(keyword in query.lower() for keyword in UNSAFE_KEYWORDS)
+    """Check that the delivered response follows the input policy decision."""
+
+    unsafe = decide_input_policy(query).refuses
     refused = "cannot help" in answer.lower()
     passed = unsafe == refused
     return GuardrailVerdict(

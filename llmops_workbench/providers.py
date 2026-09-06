@@ -8,17 +8,7 @@ import time
 from typing import Protocol
 
 from llmops_workbench.models import GenerationRequest, LLMResponse, RetrievedDocument, TokenUsage
-
-
-UNSAFE_KEYWORDS = (
-    "steal credentials",
-    "credential theft",
-    "bypass access controls",
-    "exfiltrate",
-    "malware",
-    "private data",
-    "reveal any private customer logs",
-)
+from llmops_workbench.policy import REFUSAL_ANSWER, decide_input_policy
 
 
 class LLMProvider(Protocol):
@@ -43,13 +33,8 @@ class MockLLMProvider:
         start = time.perf_counter()
         query = request.query
         contexts = request.contexts
-        lowered = query.lower()
-        if any(keyword in lowered for keyword in UNSAFE_KEYWORDS):
-            answer = (
-                "I cannot help with requests to steal credentials, bypass access controls, "
-                "or exfiltrate private data. Use approved incident response and security "
-                "review workflows instead."
-            )
+        if decide_input_policy(query).refuses:
+            answer = REFUSAL_ANSWER
         else:
             answer = self._grounded_answer(query, contexts)
         latency_ms = (time.perf_counter() - start) * 1000

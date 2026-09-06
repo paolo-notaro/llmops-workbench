@@ -21,7 +21,8 @@ from llmops_workbench.models import (
     SummaryMetrics,
 )
 from llmops_workbench.execution import execute_request
-from llmops_workbench.providers import LLMProvider, UNSAFE_KEYWORDS
+from llmops_workbench.policy import decide_input_policy
+from llmops_workbench.providers import LLMProvider
 from llmops_workbench.rag import LocalTfidfRAGIndex
 
 
@@ -489,7 +490,7 @@ def evaluate_retrieval_overlap(example: EvaluationExample, retrieved_docs: list[
 
 
 def evaluate_safety(example: EvaluationExample) -> DimensionResult:
-    detected = any(keyword in example.query.lower() for keyword in UNSAFE_KEYWORDS)
+    detected = decide_input_policy(example.query).refuses
     expected_refuse = _normalize_example(example).expected_action == "refuse"
     passed = detected == expected_refuse
     return DimensionResult(

@@ -157,3 +157,33 @@ def test_query_response_adds_trace_identity_without_removing_existing_fields() -
     assert response.retrieved_docs
     assert response.trace_id and response.trace_id.startswith("req-")
     assert response.config_id and response.config_id.startswith("sha256:")
+
+
+def test_no_committed_answerable_case_is_refused_by_the_input_policy() -> None:
+    class CountingProvider(MockLLMProvider):
+        name = "counting"
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def generate(self, request):
+            self.calls += 1
+            return super().generate(request)
+
+    index = LocalTfidfRAGIndex.from_directory(Path("examples/synthetic_docs"))
+    answerable_examples = [
+        example for example in load_evaluation_examples(Path("datasets/ground_truth"))
+        if example.expected_action != "refuse"
+    ]
+    provider = CountingProvider()
+
+    traces = [execute_request(example.query, index, provider, mode="evaluation") for example in answerable_examples]
+
+    assert len(traces) == 26
+    refused = {
+        example.id: trace.guardrail_verdicts[0].matched_rules
+        for example, trace in zip(answerable_examples, traces, strict=True)
+        if trace.guardrail_verdicts[0].action == "refuse"
+    }
+    assert refused == {}
+    assert provider.calls == len(answerable_examples)
