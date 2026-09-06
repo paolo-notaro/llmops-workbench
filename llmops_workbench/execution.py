@@ -60,16 +60,19 @@ def execute_request(
 
     stage_start = time.perf_counter()
     retrieved_docs = index.query(query, top_k=top_k)
-    retrieval_ms = _elapsed_ms(stage_start)
+    # The trace reports time inside the index; the stage timing also covers
+    # prompt rendering and the match explanation built from the same query.
+    query_ms = _elapsed_ms(stage_start)
     rendered_prompt = render_prompt(query, retrieved_docs)
     retrieval = build_retrieval_trace(
         query,
         retrieved_docs,
         top_k=top_k,
         candidate_count=index.candidate_count,
-        duration_ms=retrieval_ms,
+        duration_ms=query_ms,
         index=index,
     )
+    retrieval_ms = _elapsed_ms(stage_start)
 
     if input_verdict.action == "refuse":
         answer = REFUSAL_ANSWER

@@ -33,7 +33,7 @@ flowchart TD
 
 Every request is one canonical trace. Live HTTP traffic and offline dataset replay run through the same `execute_request()` pipeline in `llmops_workbench/execution.py` and emit the same `RequestTrace` schema. Retrieval evidence, the rendered prompt, generation, guardrail verdicts, timings, token usage, and the pinned run configuration all belong to that trace; evaluation, observability, and governance read traces instead of maintaining parallel request representations.
 
-Input policy is a set of named rules in `llmops_workbench/policy.py`. Each rule pairs a harmful capability with the intent to obtain it, so a question about unsafe behavior is answered while a request for one is refused before any provider call. Every trace records which rules fired.
+Input policy is a set of named rules in `llmops_workbench/policy.py`. Each rule names one harmful capability and is decided inside a single clause: a bare imperative refuses, as does a nearby preceding phrase asking how to carry the action out or asking for protected material to be handed over, while defensive framing such as "prevent" or "detect" does not. A question about unsafe behavior is therefore answered, and a request for one is refused before any provider call. Every trace records which rules fired.
 
 Planned, not yet implemented: a single comparison engine that runs configuration X and configuration Y over the same versioned dataset and reports per-dimension changes with uncertainty. CI will use it headlessly against a committed baseline, while the static Ops console will expose the same result schema for prompt A/B inspection.
 
