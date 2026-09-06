@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import time
 from collections import defaultdict
 from datetime import UTC, datetime
 from statistics import median
@@ -15,10 +16,13 @@ from llmops_workbench.models import (
     EvaluationReport,
     LLMResponse,
     MetricDefinition,
+    RequestTrace,
     RetrievedDocument,
     SummaryMetrics,
 )
-from llmops_workbench.providers import LLMProvider, UNSAFE_KEYWORDS
+from llmops_workbench.execution import execute_request
+from llmops_workbench.policy import decide_input_policy
+from llmops_workbench.providers import LLMProvider
 from llmops_workbench.rag import LocalTfidfRAGIndex
 
 
@@ -137,19 +141,45 @@ def evaluate_examples(
     top_k: int = 3,
     max_latency_ms: float = 1000.0,
     config: dict[str, object] | None = None,
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
 ) -> EvaluationReport:
     """Run retrieval, generation, and heuristic evaluation for examples."""
 
     records: list[EvaluationRecord] = []
     for example in examples:
-        retrieved = index.query(example.query, top_k=top_k)
-        response = provider.generate(example.query, retrieved)
-        records.append(evaluate_response(example, retrieved, response, max_latency_ms=max_latency_ms))
+        trace = execute_request(
+            example.query,
+            index,
+            provider,
+            mode="evaluation",
+            top_k=top_k,
+            dataset_id=dataset_id,
+            dataset_version=dataset_version,
+            example_id=example.id,
+        )
+        response = LLMResponse(
+            answer=trace.answer,
+            provider=trace.provider,
+            model=trace.model,
+            latency_ms=trace.timings.generation_ms,
+            token_usage=trace.token_usage,
+        )
+        records.append(evaluate_response(
+            example,
+            trace.retrieval.documents(),
+            response,
+            max_latency_ms=max_latency_ms,
+            trace=trace,
+        ))
     summary = summarize_records(records)
     insights = generate_insights(summary, records)
+    report_config = dict(config or {"provider": provider.name, "top_k": top_k, "max_latency_ms": max_latency_ms})
+    if records and records[0].trace:
+        report_config.setdefault("config_id", records[0].trace.config_id)
     return EvaluationReport(
         timestamp=datetime.now(UTC).isoformat(),
-        config=config or {"provider": provider.name, "top_k": top_k, "max_latency_ms": max_latency_ms},
+        config=report_config,
         summary=summary,
         records=records,
         insights=insights,
@@ -162,9 +192,11 @@ def evaluate_response(
     response: LLMResponse,
     *,
     max_latency_ms: float = 1000.0,
+    trace: RequestTrace | None = None,
 ) -> EvaluationRecord:
     """Evaluate one generated response."""
 
+    evaluation_start = time.perf_counter()
     normalized = _normalize_example(example)
     answer = response.answer
     predicted_action = predict_action(answer)
@@ -222,7 +254,7 @@ def evaluate_response(
     review_dimensions = [d for d in dimensions if d.name != "latency" and not d.passed]
     passed = not review_dimensions
     notes = [result.details for result in review_dimensions]
-    return EvaluationRecord(
+    record = EvaluationRecord(
         example_id=normalized.id,
         category=normalized.category,
         query=normalized.query,
@@ -243,7 +275,12 @@ def evaluate_response(
         perturbation=normalized.perturbation,
         risk_tags=normalized.risk_tags,
         metric_scores={name: round(score, 3) for name, score in metric_scores.items()},
+        trace=trace,
     )
+    if trace is not None:
+        trace.timings.evaluation_ms = round((time.perf_counter() - evaluation_start) * 1000, 3)
+        trace.timings.total_ms = round(trace.timings.total_ms + trace.timings.evaluation_ms, 3)
+    return record
 
 
 def retrieval_f1(example: EvaluationExample, retrieved_docs: list[RetrievedDocument]) -> float:
@@ -453,7 +490,7 @@ def evaluate_retrieval_overlap(example: EvaluationExample, retrieved_docs: list[
 
 
 def evaluate_safety(example: EvaluationExample) -> DimensionResult:
-    detected = any(keyword in example.query.lower() for keyword in UNSAFE_KEYWORDS)
+    detected = decide_input_policy(example.query).refuses
     expected_refuse = _normalize_example(example).expected_action == "refuse"
     passed = detected == expected_refuse
     return DimensionResult(

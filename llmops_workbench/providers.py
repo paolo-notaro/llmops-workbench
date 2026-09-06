@@ -7,25 +7,17 @@ import re
 import time
 from typing import Protocol
 
-from llmops_workbench.models import LLMResponse, RetrievedDocument
-
-
-UNSAFE_KEYWORDS = (
-    "steal credentials",
-    "credential theft",
-    "bypass access controls",
-    "exfiltrate",
-    "malware",
-    "private data",
-)
+from llmops_workbench.models import GenerationRequest, LLMResponse, RetrievedDocument, TokenUsage
+from llmops_workbench.policy import REFUSAL_ANSWER, decide_input_policy
 
 
 class LLMProvider(Protocol):
     """Protocol implemented by LLM providers."""
 
     name: str
+    model: str
 
-    def generate(self, query: str, contexts: list[RetrievedDocument]) -> LLMResponse:
+    def generate(self, request: GenerationRequest) -> LLMResponse:
         """Generate an answer for a query and retrieved context."""
 
 
@@ -33,22 +25,33 @@ class MockLLMProvider:
     """Deterministic local provider used by default."""
 
     name = "mock"
+    model = "deterministic-extractive-v1"
 
-    def generate(self, query: str, contexts: list[RetrievedDocument]) -> LLMResponse:
+    def generate(self, request: GenerationRequest) -> LLMResponse:
         """Generate a deterministic answer without network access."""
 
         start = time.perf_counter()
-        lowered = query.lower()
-        if any(keyword in lowered for keyword in UNSAFE_KEYWORDS):
-            answer = (
-                "I cannot help with requests to steal credentials, bypass access controls, "
-                "or exfiltrate private data. Use approved incident response and security "
-                "review workflows instead."
-            )
+        query = request.query
+        contexts = request.contexts
+        if decide_input_policy(query).refuses:
+            answer = REFUSAL_ANSWER
         else:
             answer = self._grounded_answer(query, contexts)
         latency_ms = (time.perf_counter() - start) * 1000
-        return LLMResponse(answer=answer, provider=self.name, latency_ms=latency_ms)
+        input_tokens = len(request.rendered_prompt.split())
+        output_tokens = len(answer.split())
+        return LLMResponse(
+            answer=answer,
+            provider=self.name,
+            model=self.model,
+            latency_ms=latency_ms,
+            token_usage=TokenUsage(
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                total_tokens=input_tokens + output_tokens,
+                method="whitespace_estimate",
+            ),
+        )
 
     def _grounded_answer(self, query: str, contexts: list[RetrievedDocument]) -> str:
         citations = " ".join(f"[doc:{doc.doc_id}]" for doc in contexts[:2])
@@ -67,13 +70,23 @@ class ExternalPlaceholderProvider(MockLLMProvider):
         self.api_key_env = api_key_env
         self.api_key_present = bool(os.getenv(api_key_env))
 
-    def generate(self, query: str, contexts: list[RetrievedDocument]) -> LLMResponse:
-        response = super().generate(query, contexts)
+    def generate(self, request: GenerationRequest) -> LLMResponse:
+        response = super().generate(request)
         suffix = f" Provider placeholder configured via {self.api_key_env}; no external API call was made."
+        answer = f"{response.answer}{suffix}"
+        input_tokens = len(request.rendered_prompt.split())
+        output_tokens = len(answer.split())
         return LLMResponse(
-            answer=f"{response.answer}{suffix}",
+            answer=answer,
             provider=self.name,
             latency_ms=response.latency_ms,
+            model=response.model,
+            token_usage=TokenUsage(
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                total_tokens=input_tokens + output_tokens,
+                method="whitespace_estimate",
+            ),
         )
 
 
