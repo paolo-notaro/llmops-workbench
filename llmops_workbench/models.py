@@ -26,6 +26,92 @@ class RetrievedDocument(DocumentChunk):
     score: float = Field(ge=0.0)
 
 
+class RetrievalMatch(RetrievedDocument):
+    """One ranked retrieval result with inspectable match evidence."""
+
+    rank: int = Field(ge=1)
+    matched_terms: list[str] = Field(default_factory=list)
+    selection_reason: Literal["ranked_similarity", "top_k_fill"]
+
+
+class RetrievalTrace(BaseModel):
+    """Configuration and results for one retrieval stage."""
+
+    strategy: str
+    top_k: int = Field(ge=1)
+    minimum_score: float | None = Field(default=None, ge=0.0)
+    candidate_count: int = Field(ge=0)
+    duration_ms: float = Field(ge=0.0)
+    results: list[RetrievalMatch]
+
+    def documents(self) -> list[RetrievedDocument]:
+        """Return provider/evaluator documents without trace-only annotations."""
+
+        return [RetrievedDocument.model_validate(result.model_dump()) for result in self.results]
+
+
+class GenerationRequest(BaseModel):
+    """Exact structured input passed across the provider boundary."""
+
+    query: str
+    rendered_prompt: str
+    contexts: list[RetrievedDocument]
+
+
+class GuardrailVerdict(BaseModel):
+    """One explicit policy decision recorded during request execution."""
+
+    stage: Literal["input", "output"]
+    policy_id: str
+    policy_version: str
+    action: Action
+    passed: bool
+    matched_rules: list[str] = Field(default_factory=list)
+    reason: str
+
+
+class TokenUsage(BaseModel):
+    """Provider-reported or transparently estimated token usage."""
+
+    input_tokens: int = Field(ge=0)
+    output_tokens: int = Field(ge=0)
+    total_tokens: int = Field(ge=0)
+    method: Literal["provider_reported", "whitespace_estimate", "not_applicable"]
+
+
+class TraceTimings(BaseModel):
+    """Measured latency for each canonical request stage."""
+
+    guardrail_ms: float = Field(ge=0.0)
+    retrieval_ms: float = Field(ge=0.0)
+    generation_ms: float = Field(ge=0.0)
+    evaluation_ms: float = Field(default=0.0, ge=0.0)
+    total_ms: float = Field(ge=0.0)
+
+
+class RequestTrace(BaseModel):
+    """Canonical result of both interactive execution and offline replay."""
+
+    schema_version: str = "1"
+    trace_id: str
+    mode: Literal["live", "evaluation"]
+    timestamp: str
+    query: str
+    config_id: str
+    config_snapshot: dict[str, Any]
+    dataset_id: str | None = None
+    dataset_version: str | None = None
+    example_id: str | None = None
+    guardrail_verdicts: list[GuardrailVerdict]
+    retrieval: RetrievalTrace
+    rendered_prompt: str
+    answer: str
+    provider: str
+    model: str
+    token_usage: TokenUsage
+    timings: TraceTimings
+
+
 class DocumentSummary(BaseModel):
     """Public metadata for one indexed synthetic document."""
 
@@ -64,6 +150,8 @@ class LLMResponse(BaseModel):
     answer: str
     provider: str
     latency_ms: float = Field(ge=0.0)
+    model: str = "unknown"
+    token_usage: TokenUsage | None = None
 
 
 class DimensionResult(BaseModel):
@@ -126,6 +214,7 @@ class EvaluationRecord(BaseModel):
     perturbation: str | None = None
     risk_tags: list[str] = Field(default_factory=list)
     metric_scores: dict[str, float] = Field(default_factory=dict)
+    trace: RequestTrace | None = None
 
 
 class SummaryMetrics(BaseModel):
@@ -172,6 +261,8 @@ class QueryResponse(BaseModel):
     retrieved_docs: list[RetrievedDocument]
     quality_checks: dict[str, bool] = Field(default_factory=dict)
     live_metrics: dict[str, float] = Field(default_factory=dict)
+    trace_id: str | None = None
+    config_id: str | None = None
 
 
 class DatasetFieldDefinition(BaseModel):

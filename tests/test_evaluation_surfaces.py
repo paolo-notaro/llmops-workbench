@@ -3,6 +3,7 @@ from pathlib import Path
 from llmops_workbench.app import app, evaluation_dataset, live_monitoring
 from llmops_workbench.dataset import build_dataset_profile, dataset_version, load_evaluation_examples
 from llmops_workbench.live_evaluation import evaluate_live_request, summarize_live_requests
+from llmops_workbench.models import GenerationRequest
 from llmops_workbench.providers import MockLLMProvider
 from llmops_workbench.rag import LocalTfidfRAGIndex
 
@@ -26,7 +27,11 @@ def test_live_metrics_are_deterministic_for_a_grounded_query() -> None:
     provider = MockLLMProvider()
     query = "How should rollback be handled after a failed GenAI deployment?"
     retrieved = index.query(query, top_k=3)
-    response = provider.generate(query, retrieved)
+    response = provider.generate(GenerationRequest(
+        query=query,
+        rendered_prompt=query,
+        contexts=retrieved,
+    ))
 
     first = evaluate_live_request("req-1", "2026-01-01T00:00:00+00:00", query, response.answer, response.provider, 1.0, retrieved)
     second = evaluate_live_request("req-2", "2026-01-01T00:00:01+00:00", query, response.answer, response.provider, 2.0, retrieved)
