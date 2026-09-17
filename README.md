@@ -4,15 +4,15 @@
 
 *An inspectable environment for evaluating, serving, and monitoring production-style LLM systems.*
 
-**[Open the live workbench](https://llmops-workbench-3auiyr3neq-ew.a.run.app)**
+**[Open the live demo](https://llmops-workbench-3auiyr3neq-ew.a.run.app)**
 
 The workbench combines a synthetic RAG application with offline evaluation, live quality signals, safety checks, observability, and controlled delivery. It uses synthetic data and deterministic model responses, so the complete lifecycle can be inspected without confidential data or paid APIs.
 
-## What is LLMOps and why it matters
+## What is LLMOps Workbench
 
 An LLM application combines a model with prompts, retrieved context, evaluation data, policies, provider configuration, and runtime infrastructure. Each component can change independently and affect quality beyond the reach of conventional uptime and error-rate checks.
 
-**LLMOps is the engineering discipline for managing that lifecycle.** It applies repeatable evaluation, release controls, monitoring, safety checks, and operational feedback to LLM systems so teams can answer practical questions:
+**LLMOps is the engineering discipline for managing an LLM app lifecycle.** It applies repeatable evaluation, release controls, monitoring, safety checks, and operational feedback to LLM systems so teams can answer practical questions:
 
 - Did the candidate version improve or regress on known cases?
 - Is a response supported by the retrieved evidence?
@@ -112,7 +112,7 @@ tests/                        Deterministic application tests
 <details>
 <summary><strong>Run locally</strong></summary>
 
-Requirements: Python 3.11 or later, Poetry, and Make.
+Requirements: Python 3.11, Poetry, Make.
 
 ```bash
 poetry config virtualenvs.in-project false --local
