@@ -14,7 +14,8 @@ from fastapi.staticfiles import StaticFiles
 from llmops_workbench.config import REPO_ROOT, Settings, load_settings
 from llmops_workbench.dataset import build_dataset_profile, load_evaluation_examples
 from llmops_workbench.evaluators import evaluate_examples
-from llmops_workbench.live_evaluation import evaluate_live_request, summarize_live_requests
+from llmops_workbench.execution import execute_request
+from llmops_workbench.live_evaluation import evaluate_live_trace, summarize_live_requests
 from llmops_workbench.models import (
     DatasetProfile,
     DocumentSummary,
@@ -180,38 +181,38 @@ def query(request: QueryRequest) -> QueryResponse:
     """Retrieve context, generate an answer, and record live quality proxies."""
 
     global _live_total_requests
-    retrieved_docs = get_index().query(request.query, top_k=request.top_k)
-    response = get_provider().generate(request.query, retrieved_docs)
     _live_total_requests += 1
-    live_record = evaluate_live_request(
-        request_id=f"req-{_live_total_requests:04d}",
-        timestamp=datetime.now(UTC).isoformat(),
-        query=request.query,
-        answer=response.answer,
-        provider=response.provider,
-        latency_ms=response.latency_ms,
-        retrieved_docs=retrieved_docs,
+    trace = execute_request(
+        request.query,
+        get_index(),
+        get_provider(),
+        mode="live",
+        top_k=request.top_k,
+        trace_id=f"req-{_live_total_requests:04d}",
     )
+    live_record = evaluate_live_trace(trace)
     _live_records.append(live_record)
     quality_checks = {
         **live_record.checks,
-        "latency_under_threshold": response.latency_ms <= get_settings().max_latency_ms,
+        "latency_under_threshold": trace.timings.generation_ms <= get_settings().max_latency_ms,
     }
     metrics_registry.record_request(
-        response.latency_ms,
+        trace.timings.generation_ms,
         evaluation_passed=all(quality_checks.values()),
         retrieval_hit=live_record.retrieved_count > 0,
         requires_review=live_record.requires_review,
-        refusal="cannot help" in response.answer.lower(),
+        refusal="cannot help" in trace.answer.lower(),
         retrieval_confidence=live_record.metrics["retrieval_confidence"],
     )
     return QueryResponse(
-        answer=response.answer,
-        provider=response.provider,
-        latency_ms=response.latency_ms,
-        retrieved_docs=retrieved_docs,
+        answer=trace.answer,
+        provider=trace.provider,
+        latency_ms=trace.timings.generation_ms,
+        retrieved_docs=trace.retrieval.documents(),
         quality_checks=quality_checks,
         live_metrics=live_record.metrics,
+        trace_id=trace.trace_id,
+        config_id=trace.config_id,
     )
 
 
@@ -262,6 +263,7 @@ def _get_offline_report() -> EvaluationReport:
             if (
                 candidate.config.get("mode") == "offline_snapshot"
                 and candidate.config.get("dataset_version") == get_dataset_profile().version
+                and all(record.trace is not None for record in candidate.records)
             ):
                 _offline_report = candidate
                 return _offline_report
@@ -290,5 +292,7 @@ def _build_offline_report() -> EvaluationReport:
             "max_latency_ms": settings.max_latency_ms,
             "mode": "offline_snapshot",
         },
+        dataset_id=profile.dataset_id,
+        dataset_version=profile.version,
     )
     return report

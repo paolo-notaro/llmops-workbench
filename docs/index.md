@@ -4,6 +4,8 @@ This documentation describes a privacy-safe, local-first workbench for productio
 
 The implementation uses synthetic documents, synthetic evaluation sets, deterministic mock model responses, and local metrics. It is designed to be inspected publicly without exposing employer code, private data, customer traces, proprietary prompts, or confidential architecture.
 
+**[Open the live demo](https://llmops-workbench-336449590891.europe-west1.run.app)**
+
 ## Contents
 
 - [Architecture](architecture.md)

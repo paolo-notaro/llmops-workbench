@@ -42,6 +42,8 @@ def main() -> None:
             "max_latency_ms": settings.max_latency_ms,
             "mode": "offline_snapshot",
         },
+        dataset_id=profile.dataset_id,
+        dataset_version=profile.version,
     )
     json_path, markdown_path = write_report(report, settings.reports_dir)
     print_summary(console, report)
